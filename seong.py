@@ -14,7 +14,7 @@ class DrivingClient(DrivingController):
         self.is_debug = False
 
         # api or keyboard
-        self.enable_api_control = True # True(Controlled by code) /False(Controlled by keyboard)
+        self.enable_api_control = False # True(Controlled by code) /False(Controlled by keyboard)
         super().set_enable_api_control(self.enable_api_control)
 
         self.track_type = 99
@@ -54,7 +54,7 @@ class DrivingClient(DrivingController):
             print("=========================================================")
 
         # half_load_width = self.half_road_limit - 1.25
-        car_controls.throttle = 1
+        car_controls.throttle = 1 if sensing_info.speed < 100 else 0.6
         car_controls.brake = 0
 
         middle = sensing_info.to_middle
@@ -62,23 +62,20 @@ class DrivingClient(DrivingController):
         angles = sensing_info.track_forward_angles
         bo = [90, ]
         ts = []
-        for i in range(4):
+        for i in range(3):
             C = 180 - bo[i] - angles[i]
             A =  math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
             bo.append(A)
             target = 180 - C - A
             ts.append(target)
 
-        # if middle >= -0:
-            theta = sum(ts) - 90 - sensing_info.moving_angle
-            car_controls.steering = theta / 180
-        # else:
-        #     theta = 90 - sum(ts) - sensing_info.moving_angle
-        #     car_controls.steering = theta / 180
-        print(theta)
 
-        if abs(sensing_info.moving_angle) < 1:
-            car_controls.steering = 0
+        theta = sum(ts) - 90 - sensing_info.moving_angle
+        car_controls.steering = theta / 180
+        print(ts)
+
+        # if abs(sensing_info.moving_angle) < 1:
+        #     car_controls.steering = 0
         
         if self.is_debug:
             print("[MyCar] steering:{}, throttle:{}, brake:{}".format(car_controls.steering, car_controls.throttle, car_controls.brake))
