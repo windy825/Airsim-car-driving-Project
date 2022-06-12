@@ -32,7 +32,7 @@ class DrivingClient(DrivingController):
 
 
     def control_driving(self, car_controls, sensing_info):
-        # 0.5단위로 바꾸기
+        # 0.5 단위로 바꾸기
         def change(value):
             answer = round(abs(value), 1)
             if answer < int(answer) + 0.5:
