@@ -33,7 +33,7 @@ class DrivingClient(DrivingController):
 
 
     def control_driving(self, car_controls, sensing_info):
-        # 0.5단위로 바꾸기
+        # 0.5 단위로 바꾸기
         def change(value):
             answer = round(abs(value), 1)
             if answer < int(answer) + 0.5:
@@ -65,23 +65,23 @@ class DrivingClient(DrivingController):
             print("[MyCar] distance_to_way_points: {}".format(sensing_info.distance_to_way_points))
             print("=========================================================")
 
-        
-
 
         # half_load_width = self.half_road_limit - 1.25
         car_controls.throttle = 1
         car_controls.brake = 0
-
         x = int(self.half_road_limit * 2) * 4
+
+
+        # 도로, 상대차, 장애물, 내차 모든 정보를 2차원 평면상에 표시
         MAP = [['-'] * x for _ in range(400)]
 
         # 차 중심 좌표 (car_a, car_b)
         car_a = 200
         car_b = x//2 + int(change(sensing_info.to_middle)//0.5)
 
-        for i in range(8):
+        for i in range(10):
             for j in range(6):
-                MAP[car_a - 4 +i][car_b - 3 +j] = 'A'
+                MAP[car_a - 5 +i][car_b - 3 +j] = 'A'
         
         # 장애물 중심 위치 (obstacle_a, obstacle_b)
         # print(sensing_info.track_forward_obstacles)
@@ -95,6 +95,15 @@ class DrivingClient(DrivingController):
                         for jj in range(4):
                             MAP[obstacle_a - 2 + ii][obstacle_b - 2 + jj] = 'X'
 
+        # 상대 차 중심 위치 (opp_a, opp_b)
+        if sensing_info.opponent_cars_info and abs(sensing_info.opponent_cars_info['dist']) < 95:
+            opp_a = 200 - int(change(sensing_info.opponent_cars_info['dist'] // 0.5))
+            opp_b = x//2 + int(change(sensing_info.opponent_cars_info['to_middle']) // 0.5)
+
+            for i in range(10):
+                for j in range(6):
+                    MAP[opp_a - 5 +i][opp_b - 3 +j] = 'B'
+
 
 
         
@@ -102,11 +111,6 @@ class DrivingClient(DrivingController):
         print('pppppppppppppppppppppppppppppppppppppp')
         for i in MAP:
             print(''.join(i))
-
-
-
-
-
 
 
 
