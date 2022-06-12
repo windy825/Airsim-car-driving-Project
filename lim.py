@@ -5,7 +5,8 @@ class DrivingClient(DrivingController):
     def __init__(self):
         # =========================================================== #
         #  Area for member variables =============================== #
-        # =========================================================== #
+        # =========================
+        # ================================== #
         # Editing area starts from here
         #
 
@@ -90,9 +91,9 @@ class DrivingClient(DrivingController):
                     obstacle_a = 200 - int(change(i['dist']) // 0.5)
                     obstacle_b = x//2 + int(change(i['to_middle']) // 0.5)
                     
-                    for ii in range(2):
-                        for jj in range(2):
-                            MAP[obstacle_a - 1 + ii][obstacle_b - 1 + jj] = 'X'
+                    for ii in range(4):
+                        for jj in range(4):
+                            MAP[obstacle_a - 2 + ii][obstacle_b - 2 + jj] = 'X'
 
 
 
