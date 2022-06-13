@@ -158,7 +158,7 @@ class DrivingClient(DrivingController):
             xxx = car_a - int(change(a) // 0.5)
             yyy = car_b + int(change(b) // 0.5) - half_road # 도로가 시작되는 열 값(중앙선 - half_load)
             for i in range(2 * half_road):
-                if yyy +i >= x:
+                if not 0<= yyy +i <= x:
                     continue
                 MAP[xxx][yyy +i] = '|'
         # 내 차 찍기
