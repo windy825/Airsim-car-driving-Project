@@ -57,7 +57,7 @@ class DrivingClient(DrivingController):
         car_controls.throttle = 1
         car_controls.brake = 0
 
-        # 시작
+        # way points 좌표 시작
         middle = sensing_info.to_middle
         if middle >= 0:
             points = [middle,] + sensing_info.distance_to_way_points
@@ -98,7 +98,7 @@ class DrivingClient(DrivingController):
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
             theta = 90 - sum(ts[:6 if sensing_info.speed < 120 else 7]) - sensing_info.moving_angle
-            car_controls.steering = theta / (120 if sensing_info.speed < 120 else 80) 
+            car_controls.steering = theta / (120 if sensing_info.speed < 100 else 75) 
 
         # 끝
         # 좌표는 ways에 순서대로
@@ -107,6 +107,14 @@ class DrivingClient(DrivingController):
         # for j in range(10):
         #     print(sum(ts[:j+1]), ways[j])
         # print('---------------')
+
+
+        obstacle
+        # 장애물 좌표 시작 (무조건 ways 계산 다음에 할 것)
+        for obj in sensing_info.track_forward_obstacles:
+            d, m = obj['dist'], obj['to_middle']
+
+
 
         
         if self.is_debug:
