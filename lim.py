@@ -61,6 +61,65 @@ class DrivingClient(DrivingController):
             print("[MyCar] distance_to_way_points: {}".format(sensing_info.distance_to_way_points))
             print("=========================================================")
 
+        # half_load_width = self.half_road_limit - 1.25
+        car_controls.throttle = 1
+        car_controls.brake = 0
+
+        # 시작
+        middle = sensing_info.to_middle
+        if middle >= 0:
+            points = [middle,] + sensing_info.distance_to_way_points
+            angles = [0,] + sensing_info.track_forward_angles
+            bo = [90, ]
+            ts = []
+            for i in range(10):
+                C = 180 - bo[i] - (angles[i+1] - angles[i])
+                A =  math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
+                bo.append(A)
+                target = 180 - C - A
+                ts.append(target)
+
+            # way point 각도
+            ways = []
+            for j in range(10):
+                ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
+
+
+
+            theta = sum(ts[:6 if sensing_info.speed < 120 else 7]) - 90 - sensing_info.moving_angle
+            car_controls.steering = theta / (120 if sensing_info.speed < 120 else 80) 
+            
+        else:
+            points = [-middle,] + sensing_info.distance_to_way_points
+            angles = [0, ] + [-angle for angle in sensing_info.track_forward_angles]
+            bo = [90, ]
+            ts = []
+            for i in range(10):
+                C = 180 - bo[i] - (angles[i+1] - angles[i])
+                A = math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
+                bo.append(A)
+                target = 180 - C - A
+                ts.append(target)
+
+            ways = []
+            for j in range(10):
+                ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
+            
+            theta = 90 - sum(ts[:6 if sensing_info.speed < 120 else 7]) - sensing_info.moving_angle
+            car_controls.steering = theta / (120 if sensing_info.speed < 120 else 80) 
+
+        # 끝
+        # 좌표는 ways에 순서대로
+
+
+        # for j in range(10):
+        #     print(sum(ts[:j+1]), ways[j])
+        # print('---------------')
+
+
+
+
+
 
         # half_load_width = self.half_road_limit - 1.25
         car_controls.throttle = 1
@@ -76,9 +135,7 @@ class DrivingClient(DrivingController):
         car_a = 200
         car_b = x//2 + int(change(sensing_info.to_middle)//0.5)
 
-        for i in range(10):
-            for j in range(6):
-                MAP[car_a - 5 +i][car_b - 3 +j] = 'A'
+        
         
         # 장애물 중심 위치 (obstacle_a, obstacle_b)
         # print(sensing_info.track_forward_obstacles)
@@ -92,6 +149,22 @@ class DrivingClient(DrivingController):
                         for jj in range(4):
                             MAP[obstacle_a - 2 + ii][obstacle_b - 2 + jj] = 'X'
 
+        
+
+        
+        # 중앙선 웨이 포인트 위치 (ways 2차원 배열 안의 원소는 [a, b])
+        for a, b in ways:
+            half_road = int(change(self.half_road_limit) // 0.5)
+            xxx = car_a - int(change(a) // 0.5)
+            yyy = car_b + int(change(b) // 0.5) - half_road # 도로가 시작되는 열 값(중앙선 - half_load)
+            for i in range(2 * half_road):
+                if yyy +i >= x:
+                    continue
+                MAP[xxx][yyy +i] = '|'
+        # 내 차 찍기
+        for i in range(10):
+            for j in range(6):
+                MAP[car_a - 5 +i][car_b - 3 +j] = 'A'
         # 상대 차 중심 위치 (opp_a, opp_b)
         if sensing_info.opponent_cars_info and abs(sensing_info.opponent_cars_info['dist']) < 95:
             opp_a = 200 - int(change(sensing_info.opponent_cars_info['dist'] // 0.5))
@@ -102,42 +175,15 @@ class DrivingClient(DrivingController):
                     MAP[opp_a - 5 +i][opp_b - 3 +j] = 'B'
 
 
-        
 
 
-        
-        # print('pppppppppppppppppppppppppppppppppppppp')
-        # for i in MAP:
-        #     print(''.join(i))
-
+        print('ㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁ')
+        for i in MAP:
+            print(''.join(i))
 
 
 
 
-        middle = sensing_info.to_middle
-        points = sensing_info.distance_to_way_points
-        ts = [math.acos(abs(middle)/points[0])]
-        for i in range(7):
-            target = (points[i] ** 2 + points[i+1] ** 2 - 100) / (2 * points[i] * points[i+1])
-            
-            if abs(target) <= -1:
-                target = -1
-            elif abs(target) >= 1:
-                target = 1
-            ts.append(math.acos(target))
-        
-        value = sum(ts) * 180 / math.pi
-        if middle > 0:
-            if value > 90:
-                theta = value - 90 - sensing_info.moving_angle
-                car_controls.steering = theta / 90
-        
-        elif middle <= 0:
-            theta = 90 - value - sensing_info.moving_angle
-            car_controls.steering = theta / 45
-        # print(middle, end="")
-        # print('|||||', end="")
-        # print(car_controls.steering)
         
         if self.is_debug:
             print("[MyCar] steering:{}, throttle:{}, brake:{}".format(car_controls.steering, car_controls.throttle, car_controls.brake))
