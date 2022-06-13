@@ -84,8 +84,6 @@ class DrivingClient(DrivingController):
             print(sum(ts[:j+1]), ways[j])
         print('---------------')
 
-        # if abs(sensing_info.moving_angle) < 1:
-        #     car_controls.steering = 0
         
         if self.is_debug:
             print("[MyCar] steering:{}, throttle:{}, brake:{}".format(car_controls.steering, car_controls.throttle, car_controls.brake))
