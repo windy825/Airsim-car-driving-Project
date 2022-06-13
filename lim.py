@@ -7,26 +7,22 @@ class DrivingClient(DrivingController):
         #  Area for member variables =============================== #
         # =========================================================== #
         # Editing area starts from here
-        #
-
         self.is_debug = False
-
         # api or keyboard
         self.enable_api_control = False # True(Controlled by code) /False(Controlled by keyboard)
         super().set_enable_api_control(self.enable_api_control)
-
         self.track_type = 99
-
         self.is_accident = False
         self.recovery_count = 0
         self.accident_count = 0
-
-        #
         # Editing area ends
         # ==========================================================#
         super().__init__()
 
 
+
+
+######################################################################################################################
 
 
 
@@ -68,11 +64,12 @@ class DrivingClient(DrivingController):
         # half_load_width = self.half_road_limit - 1.25
         car_controls.throttle = 1
         car_controls.brake = 0
-        x = int(self.half_road_limit * 2) * 4
+        x = int(self.half_road_limit * 2) * 6
 
 
         # 도로, 상대차, 장애물, 내차 모든 정보를 2차원 평면상에 표시
         MAP = [['-'] * x for _ in range(400)]
+
 
         # 차 중심 좌표 (car_a, car_b)
         car_a = 200
@@ -104,12 +101,13 @@ class DrivingClient(DrivingController):
                     MAP[opp_a - 5 +i][opp_b - 3 +j] = 'B'
 
 
+        
+
 
         
-        
-        print('pppppppppppppppppppppppppppppppppppppp')
-        for i in MAP:
-            print(''.join(i))
+        # print('pppppppppppppppppppppppppppppppppppppp')
+        # for i in MAP:
+        #     print(''.join(i))
 
 
 
