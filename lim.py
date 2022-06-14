@@ -148,17 +148,13 @@ class DrivingClient(DrivingController):
         car_b = x//2 + int(change(sensing_info.to_middle)//0.5)
 
         
-        # 장애물 중심 위치 (obstacle_a, obstacle_b)
-        # print(sensing_info.track_forward_obstacles)
-        if sensing_info.track_forward_obstacles:
-            for i in sensing_info.track_forward_obstacles:
-                if i['dist'] < 98:
-                    obstacle_a = 200 - int(change(i['dist']) // 0.5)
-                    obstacle_b = x//2 + int(change(i['to_middle']) // 0.5)
-                    
-                    for ii in range(4):
-                        for jj in range(4):
-                            MAP[obstacle_a - 2 + ii][obstacle_b - 2 + jj] = 'X'
+        # 장애물
+        if obs:
+            for a, b in obs:
+                newa = car_a - int(change(a) // 0.5)
+                newb = car_b - int(change(b) // 0.5)
+                if 0 <= newa and 0 <= newb < x:
+                    MAP[newa][newb] = 'X'
 
         
         # 중앙선
@@ -177,10 +173,9 @@ class DrivingClient(DrivingController):
                     moving = 0
 
                 for j in range(temp[0] - xxx):
-                    if cnt == temp_value and not giving > yyy - temp[1]:
-                            giving += moving
-                            cnt = 0
-
+                    if cnt == temp_value:
+                        giving += moving
+                        cnt = 0
                     for v in range(-half_road, half_road+1, half_road):
                         
                         if 0 <= yyy + giving + v < x:
@@ -190,9 +185,9 @@ class DrivingClient(DrivingController):
 
 
         # 내 차 찍기
-        for i in range(10):
-            for j in range(6):
-                MAP[car_a - 5 +i][car_b - 3 +j] = 'A'
+        for i in range(8):
+            for j in range(4):
+                MAP[car_a - 4 +i][car_b - 2 +j] = 'A'
 
 
         # 상대 차 중심 위치 (opp_a, opp_b)
