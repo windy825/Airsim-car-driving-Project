@@ -161,7 +161,7 @@ class DrivingClient(DrivingController):
                             MAP[obstacle_a - 2 + ii][obstacle_b - 2 + jj] = 'X'
 
         
-        # 중앙선 웨이 포인트 위치 (ways 2차원 배열 안의 원소는 [a, b])
+        # 중앙선
         temp = []
         for a, b in ways:
             half_road = int(change(self.half_road_limit) // 0.5)
