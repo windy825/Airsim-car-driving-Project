@@ -14,7 +14,7 @@ class DrivingClient(DrivingController):
         self.is_debug = False
 
         # api or keyboard
-        self.enable_api_control = True # True(Controlled by code) /False(Controlled by keyboard)
+        self.enable_api_control = False # True(Controlled by code) /False(Controlled by keyboard)
         super().set_enable_api_control(self.enable_api_control)
 
         self.track_type = 99
@@ -109,11 +109,23 @@ class DrivingClient(DrivingController):
         # print('---------------')
 
 
-        obstacle
         # 장애물 좌표 시작 (무조건 ways 계산 다음에 할 것)
+        obs = []
+        near = points[0] * math.sin(ts[0] * math.pi / 180) / math.sin(bo[1] * math.pi / 180) if bo[1] > 0 else 0
+        # print(points[0], math.sin(ts[0] * math.pi / 180), math.sin(bo[1] * math.pi / 180))
         for obj in sensing_info.track_forward_obstacles:
-            d, m = obj['dist'], obj['to_middle']
+            d, m = obj['dist'] - near, obj['to_middle']
+            if d <= 0:
+                n, k = -1, obj['dist']
+            else:
+                n, k = int(d // 10), d % 10
+            if n+2 > 10:
+                break
+            ang = angles[n+1]
+            obs.append([ways[n+1][0] + k * math.cos(ang) - m * math.sin(ang), ways[n+1][1] + k * math.sin(ang) - m * math.cos(ang)])
 
+        
+        print(obs)
 
 
         
