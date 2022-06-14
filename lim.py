@@ -65,7 +65,7 @@ class DrivingClient(DrivingController):
         car_controls.throttle = 1
         car_controls.brake = 0
 
-        # 시작
+        # way points 좌표 시작
         middle = sensing_info.to_middle
         if middle >= 0:
             points = [middle,] + sensing_info.distance_to_way_points
@@ -106,7 +106,7 @@ class DrivingClient(DrivingController):
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
             theta = 90 - sum(ts[:6 if sensing_info.speed < 120 else 7]) - sensing_info.moving_angle
-            car_controls.steering = theta / (120 if sensing_info.speed < 120 else 80) 
+            car_controls.steering = theta / (120 if sensing_info.speed < 100 else 75) 
 
         # 끝
         # 좌표는 ways에 순서대로
@@ -117,17 +117,29 @@ class DrivingClient(DrivingController):
         # print('---------------')
 
 
+        # 장애물 좌표 시작 (무조건 ways 계산 다음에 할 것)
+        obs = []
+        near = points[0] * math.sin(ts[0] * math.pi / 180) / math.sin(bo[1] * math.pi / 180) if bo[1] > 0 else 0
+        # print(points[0], math.sin(ts[0] * math.pi / 180), math.sin(bo[1] * math.pi / 180))
+        for obj in sensing_info.track_forward_obstacles:
+            d, m = obj['dist'] - near, obj['to_middle']
+            if d <= 0:
+                n, k = -1, obj['dist']
+            else:
+                n, k = int(d // 10), d % 10
+            if n+2 > 10:
+                break
+            ang = angles[n+1]
+            obs.append([ways[n+1][0] + k * math.cos(ang) - m * math.sin(ang), ways[n+1][1] + k * math.sin(ang) - m * math.cos(ang)])
+
+        
+        # print(obs)
 
 
-
-
-        # half_load_width = self.half_road_limit - 1.25
-        car_controls.throttle = 1
-        car_controls.brake = 0
-        x = int(self.half_road_limit * 2) * 6
-
+########################### MAP 생성 #####################################################################################################
 
         # 도로, 상대차, 장애물, 내차 모든 정보를 2차원 평면상에 표시
+        x = int(self.half_road_limit * 2) * 6
         MAP = [['-'] * x for _ in range(400)]
 
 
@@ -135,7 +147,6 @@ class DrivingClient(DrivingController):
         car_a = 200
         car_b = x//2 + int(change(sensing_info.to_middle)//0.5)
 
-        
         
         # 장애물 중심 위치 (obstacle_a, obstacle_b)
         # print(sensing_info.track_forward_obstacles)
@@ -150,21 +161,40 @@ class DrivingClient(DrivingController):
                             MAP[obstacle_a - 2 + ii][obstacle_b - 2 + jj] = 'X'
 
         
-
-        
         # 중앙선 웨이 포인트 위치 (ways 2차원 배열 안의 원소는 [a, b])
+        temp = []
         for a, b in ways:
             half_road = int(change(self.half_road_limit) // 0.5)
             xxx = car_a - int(change(a) // 0.5)
-            yyy = car_b + int(change(b) // 0.5) - half_road # 도로가 시작되는 열 값(중앙선 - half_load)
-            for i in range(2 * half_road):
-                if not 0<= yyy +i < x:
-                    continue
-                MAP[xxx][yyy +i] = '|'
+            yyy = car_b + int(change(b) // 0.5)
+            
+            if temp:
+                temp_value = 0 if yyy - temp[1] == 0 else int((temp[0] - xxx) / abs(yyy - temp[1]) + 0.5)
+                cnt, giving = 0, 0
+                if temp_value != 0:
+                    moving = 1 if yyy - temp[1] < 0 else -1
+                else:
+                    moving = 0
+
+                for j in range(temp[0] - xxx):
+                    if cnt == temp_value and not giving > yyy - temp[1]:
+                            giving += moving
+                            cnt = 0
+
+                    for v in range(-half_road, half_road+1, half_road):
+                        
+                        if 0 <= yyy + giving + v < x:
+                            MAP[xxx + j][yyy + giving + v] =  '|'
+                    cnt += 1
+            temp = [xxx, yyy]
+
+
         # 내 차 찍기
         for i in range(10):
             for j in range(6):
                 MAP[car_a - 5 +i][car_b - 3 +j] = 'A'
+
+
         # 상대 차 중심 위치 (opp_a, opp_b)
         if sensing_info.opponent_cars_info and abs(sensing_info.opponent_cars_info['dist']) < 95:
             opp_a = 200 - int(change(sensing_info.opponent_cars_info['dist'] // 0.5))
@@ -178,8 +208,8 @@ class DrivingClient(DrivingController):
 
 
         print('ㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁ')
-        for i in MAP:
-            print(''.join(i))
+        for i in range(50,210):
+            print(''.join(MAP[i]))
 
 
 
