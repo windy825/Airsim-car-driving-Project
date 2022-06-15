@@ -119,29 +119,31 @@ class DrivingClient(DrivingController):
 
         # 장애물 좌표 시작 (무조건 ways 계산 다음에 할 것)
         obs = []
-        near = points[0] * math.sin(ts[0] * math.pi / 180) / math.sin(bo[1] * math.pi / 180) if bo[1] > 0 else 0
-        # print(points[0], math.sin(ts[0] * math.pi / 180), math.sin(bo[1] * math.pi / 180))
+        near = points[0] * math.cos((90 - angles[1]) * math.pi / 180) + points[1] * math.cos(bo[1] * math.pi / 180)
         for obj in sensing_info.track_forward_obstacles:
             d, m = obj['dist'] - near, obj['to_middle']
             if d <= 0:
                 n, k = -1, obj['dist']
+                ang = (90 - angles[n+1]) * math.pi / 180
+                obs.append([0 + k * math.sin(ang) - m * math.cos(ang), middle + k * math.cos(ang) + m * math.sin(ang)])
+    
             else:
                 n, k = int(d // 10), d % 10
-            if n+2 > 10:
-                break
-            ang = angles[n+1]
-            obs.append([ways[n+1][0] + k * math.cos(ang) - m * math.sin(ang), ways[n+1][1] + k * math.sin(ang) - m * math.cos(ang)])
+                if n+2 > 10:
+                    break
+                ang = (90 - angles[n+1]) * math.pi / 180
+                obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
 
         
-        # print(obs)
-
 
 ########################### MAP 생성 #####################################################################################################
+# A = 나,  B = 상대,  X = 장애물, | = 선
+
+
 
         # 도로, 상대차, 장애물, 내차 모든 정보를 2차원 평면상에 표시
         x = int(self.half_road_limit * 2) * 6
         MAP = [['-'] * x for _ in range(400)]
-
 
         # 차 중심 좌표 (car_a, car_b)
         car_a = 200
@@ -155,12 +157,11 @@ class DrivingClient(DrivingController):
                 newb = car_b - int(change(b) // 0.5)
                 if 0 <= newa and 0 <= newb < x:
                     MAP[newa][newb] = 'X'
-
         
         # 중앙선
-        temp = []
+        temp = [car_a, car_b - int(change(middle) // 0.5)]
+        half_road = int(change(self.half_road_limit) // 0.5)
         for a, b in ways:
-            half_road = int(change(self.half_road_limit) // 0.5)
             xxx = car_a - int(change(a) // 0.5)
             yyy = car_b + int(change(b) // 0.5)
             
@@ -185,9 +186,7 @@ class DrivingClient(DrivingController):
 
 
         # 내 차 찍기
-        for i in range(8):
-            for j in range(4):
-                MAP[car_a - 4 +i][car_b - 2 +j] = 'A'
+        MAP[car_a][car_b] = 'A'
 
 
         # 상대 차 중심 위치 (opp_a, opp_b)
@@ -195,9 +194,7 @@ class DrivingClient(DrivingController):
             opp_a = 200 - int(change(sensing_info.opponent_cars_info['dist'] // 0.5))
             opp_b = x//2 + int(change(sensing_info.opponent_cars_info['to_middle']) // 0.5)
 
-            for i in range(10):
-                for j in range(6):
-                    MAP[opp_a - 5 +i][opp_b - 3 +j] = 'B'
+            MAP[opp_a][opp_b] = 'B'
 
 
 
@@ -207,6 +204,12 @@ class DrivingClient(DrivingController):
             print(''.join(MAP[i]))
 
 
+        # for i in range(car_a, 0, -1):
+        #     if 'X' in MAP[i]:
+        #         line = ''.join(MAP[i])
+        #         start = line.find('|') - 6
+        #         end = start + 2 * half_road + 12
+                
 
 
         
