@@ -62,6 +62,7 @@ class DrivingClient(DrivingController):
         car_controls.steering = 0
 
         # 일반 운전 상태로 복귀
+        # 맨 위에 accident_step 전역변수로 정의해둠!
         if sensing_info.speed > 10:
             accident_step = 0
             self.recovery_count = 0
@@ -118,6 +119,7 @@ class DrivingClient(DrivingController):
                 theta = 90 - sum(ts[:6 if sensing_info.speed < 120 else 7]) - sensing_info.moving_angle
                 car_controls.steering = theta / (120 if sensing_info.speed < 100 else 75)
 
+        # 회복 후진
         if accident_step == 1:
             self.recovery_count += 1
             car_controls.throttle = -1
@@ -128,11 +130,13 @@ class DrivingClient(DrivingController):
             else:
                 car_controls.steering = 0
         
+        # 다음 단계로 넘기기
         if self.recovery_count > 12:
             accident_step = 2
             self.recovery_count = 0
             self.accident_count = 0
         
+        # 기본 운전 상태로 되돌리기 직전 과정(후진 정차)
         if accident_step == 2:
             car_controls.steering = 0
             car_controls.throttle = 1
