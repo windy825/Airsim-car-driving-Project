@@ -10,7 +10,7 @@ class DrivingClient(DrivingController):
         # Editing area starts from here
         self.is_debug = False
         # api or keyboard
-        self.enable_api_control = False # True(Controlled by code) /False(Controlled by keyboard)
+        self.enable_api_control = True # True(Controlled by code) /False(Controlled by keyboard)
         super().set_enable_api_control(self.enable_api_control)
         self.track_type = 99
         self.is_accident = False
@@ -150,15 +150,6 @@ class DrivingClient(DrivingController):
         car_b = x//2 + int(change(middle)//0.5)
 
         
-        # 장애물
-        if obs:
-            for a, b in obs:
-                newa = car_a - int(change(a) // 0.5)
-                newb = car_b + int(change(b) // 0.5)
-                for ii in range(12):
-                    if 0 <= newa and 0 <= newb < x:
-                        MAP[newa][newb -6 + ii] = 'X'
-        
         # 중앙선
         temp = [car_a, car_b - int(change(middle) // 0.5)]
         half_road = int(change(self.half_road_limit) // 0.5)
@@ -186,11 +177,24 @@ class DrivingClient(DrivingController):
             temp = [xxx, yyy]
 
 
+        # 장애물
+        if obs:
+            for a, b in obs:
+                newa = car_a - int(change(a) // 0.5)
+                newb = car_b + int(change(b) // 0.5)
+                for ii in range(6):
+                    for jj in range(10):
+                        if 0 <= newa - 3 + ii and 0 <= newb -5 + jj < x:
+                            if MAP[newa - 3 + ii][newb -5 + jj] == '|':
+                                MAP[newa - 3 + ii][newb -5 + jj] = '/'
+                            else:
+                                MAP[newa - 3 + ii][newb -5 + jj] = 'X'
+
 
         # 내 차 찍기
         # MAP[car_a][car_b] = 'A'
         for i in range(6):
-            [car_a][car_b - 3 + i] = 'A' 
+            MAP[car_a][car_b - 3 + i] = 'A' 
 
 
 
@@ -202,23 +206,26 @@ class DrivingClient(DrivingController):
             MAP[opp_a][opp_b] = 'B'
 
 
-
-
-
         # 가능한 통로 계산
         path = []
-        for i in range(car_a, 0, -1):
+        for i in range(car_a -2, 0, -1):
             if 'X' in MAP[i]:
                 line = ''.join(MAP[i])
-                start = line.find('|') - 3
-                end = start + 2 * half_road  + 6
+                start = min(line.find('|'), line.find('/')) - 3
+                end = start + 2 * half_road +6
                 for j in range(start, end):
-                    if line[j] != 'X':
+                    if 0 <= j < x and line[j] not in '/X':
                         path.append([i,j])
                         MAP[i][j] = 'O'
                 break
 
-        # if path:
+        if path:
+            path = [(math.atan((b - car_b) / (car_a - a)) * 180 / math.pi - sensing_info.moving_angle) for a, b in path]
+            # print(path)
+            target = []
+            for a in path:
+                target.append(a / (120 if sensing_info.speed < 100 else 75))
+            car_controls.steering = min(target, key= lambda x : abs(x - car_controls.steering))
 
 
         print('ㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁ')
