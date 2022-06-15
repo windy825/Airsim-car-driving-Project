@@ -134,7 +134,7 @@ class DrivingClient(DrivingController):
                 ang = (90 - angles[n+1]) * math.pi / 180
                 obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
 
-        
+             
 
 ########################### MAP 생성 #####################################################################################################
 # A = 나,  B = 상대,  X = 장애물, | = 선
@@ -155,8 +155,9 @@ class DrivingClient(DrivingController):
             for a, b in obs:
                 newa = car_a - int(change(a) // 0.5)
                 newb = car_b + int(change(b) // 0.5)
-                if 0 <= newa and 0 <= newb < x:
-                    MAP[newa][newb] = 'X'
+                for ii in range(12):
+                    if 0 <= newa and 0 <= newb < x:
+                        MAP[newa][newb -6 + ii] = 'X'
         
         # 중앙선
         temp = [car_a, car_b - int(change(middle) // 0.5)]
@@ -185,8 +186,12 @@ class DrivingClient(DrivingController):
             temp = [xxx, yyy]
 
 
+
         # 내 차 찍기
-        MAP[car_a][car_b] = 'A'
+        # MAP[car_a][car_b] = 'A'
+        for i in range(6):
+            [car_a][car_b - 3 + i] = 'A' 
+
 
 
         # 상대 차 중심 위치 (opp_a, opp_b)
@@ -199,17 +204,26 @@ class DrivingClient(DrivingController):
 
 
 
+
+        # 가능한 통로 계산
+        path = []
+        for i in range(car_a, 0, -1):
+            if 'X' in MAP[i]:
+                line = ''.join(MAP[i])
+                start = line.find('|') - 3
+                end = start + 2 * half_road  + 6
+                for j in range(start, end):
+                    if line[j] != 'X':
+                        path.append([i,j])
+                        MAP[i][j] = 'O'
+                break
+
+        # if path:
+
+
         print('ㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁ')
         for i in range(50,210):
-            print(''.join(MAP[i]))
-
-
-        # for i in range(car_a, 0, -1):
-        #     if 'X' in MAP[i]:
-        #         line = ''.join(MAP[i])
-        #         start = line.find('|') - 6
-        #         end = start + 2 * half_road + 12
-                
+            print(''.join(MAP[i]))        
 
 
         
