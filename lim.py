@@ -125,7 +125,7 @@ class DrivingClient(DrivingController):
             if d <= 0:
                 n, k = -1, obj['dist']
                 ang = (90 - angles[n+1]) * math.pi / 180
-                obs.append([0 + k * math.sin(ang) - m * math.cos(ang), middle + k * math.cos(ang) + m * math.sin(ang)])
+                obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang)])
     
             else:
                 n, k = int(d // 10), d % 10
@@ -147,14 +147,14 @@ class DrivingClient(DrivingController):
 
         # 차 중심 좌표 (car_a, car_b)
         car_a = 200
-        car_b = x//2 + int(change(sensing_info.to_middle)//0.5)
+        car_b = x//2 + int(change(middle)//0.5)
 
         
         # 장애물
         if obs:
             for a, b in obs:
                 newa = car_a - int(change(a) // 0.5)
-                newb = car_b - int(change(b) // 0.5)
+                newb = car_b + int(change(b) // 0.5)
                 if 0 <= newa and 0 <= newb < x:
                     MAP[newa][newb] = 'X'
         
