@@ -79,8 +79,9 @@ class DrivingClient(DrivingController):
 
 
             theta = sum(ts[:6 if sensing_info.speed < 120 else 7]) - 90 - sensing_info.moving_angle
-            car_controls.steering = theta / (120 if sensing_info.speed < 120 else 80) 
-            
+            car_controls.steering = theta / (120 if sensing_info.speed < 120 else 80)
+
+
         else:
             points = [-middle,] + sensing_info.distance_to_way_points
             angles = [0, ] + [-angle for angle in sensing_info.track_forward_angles]
@@ -103,30 +104,26 @@ class DrivingClient(DrivingController):
         # 끝
         # 좌표는 ways에 순서대로
 
-
-        # for j in range(10):
-        #     print(sum(ts[:j+1]), ways[j])
-        # print('---------------')
-
-
-        # 장애물 좌표 시작 (무조건 ways 계산 다음에 할 것)
         obs = []
-        near = points[0] * math.sin(ts[0] * math.pi / 180) / math.sin(bo[1] * math.pi / 180) if bo[1] > 0 else 0
-        # print(points[0], math.sin(ts[0] * math.pi / 180), math.sin(bo[1] * math.pi / 180))
+        near = points[0] * math.cos((90 - angles[1]) * math.pi / 180) + points[1] * math.cos(bo[1] * math.pi / 180)
         for obj in sensing_info.track_forward_obstacles:
             d, m = obj['dist'] - near, obj['to_middle']
             if d <= 0:
                 n, k = -1, obj['dist']
+                ang = (90 - angles[n+1]) * math.pi / 180
+                obs.append([0 + k * math.sin(ang) - m * math.cos(ang), middle + k * math.cos(ang) + m * math.sin(ang)])
+    
             else:
                 n, k = int(d // 10), d % 10
-            if n+2 > 10:
-                break
-            ang = angles[n+1]
-            obs.append([ways[n+1][0] + k * math.cos(ang) - m * math.sin(ang), ways[n+1][1] + k * math.sin(ang) - m * math.cos(ang)])
+                if n+2 > 10:
+                    break
+                ang = (90 - angles[n+1]) * math.pi / 180
+                obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
 
-        
+
         print(obs)
 
+        
 
         
         if self.is_debug:
