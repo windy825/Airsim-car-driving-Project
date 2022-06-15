@@ -1,7 +1,8 @@
+from re import L
 from DrivingInterface.drive_controller import DrivingController
 import math
 
-
+accident_step = 0
 class DrivingClient(DrivingController):
     def __init__(self):
         # =========================================================== #
@@ -21,7 +22,6 @@ class DrivingClient(DrivingController):
         self.is_accident = False
         self.recovery_count = 0
         self.accident_count = 0
-        self.accident_step = 0
 
         #
         # Editing area ends
@@ -61,19 +61,20 @@ class DrivingClient(DrivingController):
         car_controls.brake = 0
         car_controls.steering = 0
 
-        # 충돌 체크
+        # 일반 운전 상태로 복귀
         if sensing_info.speed > 10:
-            self.accident_step = 0
+            accident_step = 0
             self.recovery_count = 0
             self.accident_count = 0
 
-        if sensing_info.lap_progress > 0.5 and self.accident_step == 0 and abs(sensing_info.speed) < 1.0:
+        # 출발하고 조금 뒤부터 속도가 1km/h 이하가 되면 accident_count가 1이 됨
+        if sensing_info.lap_progress > 0.5 and accident_step == 0 and abs(sensing_info.speed) < 1.0:
             self.accident_count += 1
 
         if self.accident_count > 8:
-            self.accident_step = 1
+            accident_step = 1
 
-        if self.accident_step == 0:
+        if accident_step == 0:
             # way points 좌표 시작
             middle = sensing_info.to_middle
             if middle >= 0:
@@ -117,41 +118,34 @@ class DrivingClient(DrivingController):
                 theta = 90 - sum(ts[:6 if sensing_info.speed < 120 else 7]) - sensing_info.moving_angle
                 car_controls.steering = theta / (120 if sensing_info.speed < 100 else 75)
 
-        elif self.accident_step == 1:
+        if accident_step == 1:
+            self.recovery_count += 1
             car_controls.throttle = -1
-            ob_to_middle1 = []
-            ob_to_middle2 = []
-            ob_to_middle3 = []
-            for obstacle in sensing_info.track_forward_obstacles:
-                if 0 < obstacle['dist'] < 11:
-                    if obstacle['to_middle'] <= -(self.half_road_limit - 1.25) / 3 or \
-                            obstacle['to_middle'] - 1 <= -(self.half_road_limit - 1.25) / 3:
-                        ob_to_middle1.append(obstacle['to_middle'])
-                    if -(self.half_road_limit - 1.25) / 3 < obstacle['to_middle'] <= (
-                            self.half_road_limit - 1.25) / 3 or \
-                            -(self.half_road_limit - 1.25) / 3 < obstacle['to_middle'] - 1 <= (
-                            self.half_road_limit - 1.25) / 3 or \
-                            -(self.half_road_limit - 1.25) / 3 < obstacle['to_middle'] + 1 <= (
-                            self.half_road_limit - 1.25) / 3:
-                        ob_to_middle2.append(obstacle['to_middle'])
-                    if (self.half_road_limit - 1.25) / 3 < obstacle['to_middle'] or \
-                            (self.half_road_limit - 1.25) / 3 < obstacle['to_middle'] + 1:
-                        ob_to_middle3.append(obstacle['to_middle'])
-
-                else:
-                    break
-
-            res = min(len(ob_to_middle1), len(ob_to_middle2), len(ob_to_middle3))
-            if res == ob_to_middle1:
-                pass
-            elif res == ob_to_middle2:
-                pass
+            if sensing_info.moving_angle > 10:
+                car_controls.steering = 0.6
+            elif sensing_info.moving_angle < -10:
+                car_controls.steering = -0.6
             else:
-                pass
+                car_controls.steering = 0
+        
+        if self.recovery_count > 12:
+            accident_step = 2
+            self.recovery_count = 0
+            self.accident_count = 0
+        
+        if accident_step == 2:
+            car_controls.steering = 0
+            car_controls.throttle = 1
+            car_controls.brake = 1
+            if sensing_info.speed > -1:
+                accident_step = 0
+                car_controls.throttle = 1
+                car_controls.brake = 0
+
 
         if self.is_debug:
             print("[MyCar] steering:{}, throttle:{}, brake:{}" \
-                  .format(car_controls.steering, car_controls.throttle, car_controls.brake))
+                    .format(car_controls.steering, car_controls.throttle, car_controls.brake))
 
         # Editing area ends
         # ==========================================================#
