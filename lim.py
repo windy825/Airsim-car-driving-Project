@@ -106,7 +106,7 @@ class DrivingClient(DrivingController):
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
             theta = 90 - sum(ts[:6 if sensing_info.speed < 120 else 7]) - sensing_info.moving_angle
-            car_controls.steering = theta / (120 if sensing_info.speed < 100 else 75) 
+            car_controls.steering = theta / (100 if sensing_info.speed < 100 else 55) 
 
         # 끝
         # 좌표는 ways에 순서대로
@@ -182,13 +182,13 @@ class DrivingClient(DrivingController):
             for a, b in obs:
                 newa = car_a - int(change(a) // 0.5)
                 newb = car_b + int(change(b) // 0.5)
-                for ii in range(6):
-                    for jj in range(10):
-                        if 0 <= newa - 3 + ii and 0 <= newb -5 + jj < x:
-                            if MAP[newa - 3 + ii][newb -5 + jj] == '|':
-                                MAP[newa - 3 + ii][newb -5 + jj] = '/'
+                for ii in range(8):
+                    for jj in range(12):
+                        if 0 <= newa - 4 + ii and 0 <= newb -6 + jj < x:
+                            if MAP[newa - 4 + ii][newb -6 + jj] == '-':
+                                MAP[newa - 4 + ii][newb -6 + jj] = 'X'
                             else:
-                                MAP[newa - 3 + ii][newb -5 + jj] = 'X'
+                                MAP[newa - 4 + ii][newb -6 + jj] = '/'
 
 
         # 내 차 찍기
@@ -208,11 +208,12 @@ class DrivingClient(DrivingController):
 
         # 가능한 통로 계산
         path = []
-        for i in range(car_a -2, 0, -1):
+        for i in range(car_a -10, 0, -1):
             if 'X' in MAP[i]:
                 line = ''.join(MAP[i])
-                start = min(line.find('|'), line.find('/')) - 3
-                end = start + 2 * half_road +6
+                start = min(line.find('|') if line.find('|') != -1 else 200, line.find('/') if line.find('/') != -1 else 200) - 5
+                end = start + 2 * half_road + 10
+                print(start, end)
                 for j in range(start, end):
                     if 0 <= j < x and line[j] not in '/X':
                         path.append([i,j])
@@ -224,14 +225,14 @@ class DrivingClient(DrivingController):
             # print(path)
             target = []
             for a in path:
-                target.append(a / (120 if sensing_info.speed < 100 else 75))
-            car_controls.steering = min(target, key= lambda x : abs(x - car_controls.steering))
+                target.append(a / (100 if sensing_info.speed < 100 else 85))
+            car_controls.steering = min(target, key= lambda x : abs(x - car_controls.steering)) 
 
 
         print('ㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁ')
         for i in range(50,210):
             print(''.join(MAP[i]))        
-
+        print(car_controls.steering)
 
         
         if self.is_debug:
