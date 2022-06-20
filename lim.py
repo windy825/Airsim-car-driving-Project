@@ -1,5 +1,5 @@
 
-import math, time
+import math
 from DrivingInterface.drive_controller import DrivingController
 
 class DrivingClient(DrivingController):
@@ -21,17 +21,8 @@ class DrivingClient(DrivingController):
         # ==========================================================#
         super().__init__()
 
-
-
-
-######################################################################################################################
-
-
-
-
     def control_driving(self, car_controls, sensing_info):
-        # 프로그램 실행 시간
-        start_time = time.time()
+
         
         # 0.5 단위로 바꾸기
         def change(value):
@@ -181,11 +172,6 @@ class DrivingClient(DrivingController):
 
 
 
-########################### MAP 생성 #####################################################################################################
-# A = 나,  B = 상대,  X = 장애물, | = 선
-
-
-
         # 도로, 상대차, 장애물, 내차 모든 정보를 2차원 평면상에 표시
         x = int(self.half_road_limit * 2) * 8
         MAP = [['-'] * x for _ in range(400)]
@@ -244,14 +230,6 @@ class DrivingClient(DrivingController):
         MAP[car_a][car_b] = 'A' 
 
 
-        # 상대 차 중심 위치 (opp_a, opp_b)
-        if sensing_info.opponent_cars_info and abs(sensing_info.opponent_cars_info['dist']) < 95:
-            opp_a = 200 - int(change(sensing_info.opponent_cars_info['dist'] // 0.5))
-            opp_b = x//2 + int(change(sensing_info.opponent_cars_info['to_middle']) // 0.5)
-
-            MAP[opp_a][opp_b] = 'B'
-
-
         # 가능한 통로 계산
         path_arr = [1] * (x)
         flag = 0
@@ -291,7 +269,6 @@ class DrivingClient(DrivingController):
 
 
         path_arr = [(math.atan((b - car_b) / (car_a - i_idx)) * 180 / math.pi - sensing_info.moving_angle) for b in range(len(path_arr)) if path_arr[b]]
-        # print(path_arr)
         
         if flag:
             if spd > 135:
@@ -314,35 +291,11 @@ class DrivingClient(DrivingController):
             car_controls.steering = min(target, key= lambda x : abs(x - car_controls.steering))
 
 
-
-        print('ㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁ')
-        for i in range(140, car_a + 1):
-            print(''.join(MAP[i]))        
-
         
         if self.is_debug:
             print("[MyCar] steering:{}, throttle:{}, brake:{}".format(car_controls.steering, car_controls.throttle, car_controls.brake))
 
-        # temp = 0
-        # for i in range(car_a-70, 80, -1):
-        #     temp += road_start_idx[i] - road_start_idx[i-1]
-        # yes_speed = 0 if sensing_info.speed < 150 else sensing_info.speed - 150
-        # yes_this = int(abs(temp)/40 + yes_speed/10)
-        # # yes_that = int(sensing_info.speed/80)
-        # # adding = sum(ts[:6 + (yes_this+yes_that if yes_this + yes_that <= 20 else 20)])
-        # adding = sum(ts[:6 + (yes_this if yes_this <= 14 else 14)])
-
-        # print(temp)
-
-        # if middle >= 0:
-        #     theta = adding - 90 - sensing_info.moving_angle
-        # else:
-        #     theta = 90 - adding - sensing_info.moving_angle
-
-        # car_controls.steering = theta / (145 - abs(temp))
-        # if sensing_info.speed > 165 and abs(temp) > 55:
-        #     car_controls.steering *= 5.1
-        # print(car_controls.steering)
+    
 
         return car_controls
 
