@@ -64,7 +64,6 @@ class DrivingClient(DrivingController):
         middle = sensing_info.to_middle
         spd = sensing_info.speed
 
-
         if middle >= 0:
             points = [middle,] + sensing_info.distance_to_way_points
             angles = [0,] + sensing_info.track_forward_angles
@@ -72,7 +71,8 @@ class DrivingClient(DrivingController):
             ts = []
             for i in range(10):
                 C = 180 - bo[i] - (angles[i+1] - angles[i])
-                A =  math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
+                temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
+                A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
                 bo.append(A)
                 target = 180 - C - A
                 ts.append(target)
@@ -91,7 +91,8 @@ class DrivingClient(DrivingController):
             ts = []
             for i in range(10):
                 C = 180 - bo[i] - (angles[i+1] - angles[i])
-                A = math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
+                temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
+                A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
                 bo.append(A)
                 target = 180 - C - A
                 ts.append(target)
@@ -115,13 +116,6 @@ class DrivingClient(DrivingController):
         #     car_controls.steering = theta / 85
 
 
-        # if abs(theta) < 5 and abs(sensing_info.moving_angle) < 5:
-        #     car_controls.steering = 0
-        # else:
-
-
-
-
 
         # 끝
         # 좌표는 ways에 순서대로
@@ -142,26 +136,6 @@ class DrivingClient(DrivingController):
         #         ang = (90 - angles[n+1]) * math.pi / 180
         #         obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
 
-
-        # 아웃 인 아웃 구현
-        # if abs(sensing_info.moving_angle) < 5 and abs(theta) < 3:
-        #     car_controls.steering = 0
-            # if angles[-1] > 90 and middle > -5:
-            #     pass
-            # elif angles[-1] < -90 and middle < 5:
-
-
-
-        
-
-        # racing line에 따른 경로 최적화
-
-
-        # M = [ways[7][0]/2, ways[7][1]/2]
-        # D = math.sqrt(M[0]**2 + M[1]**2)
-        # r = 100
-        # alpha = math.asin(D / r)
-        # theta = 
 
         
         if self.is_debug:
