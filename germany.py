@@ -123,16 +123,7 @@ class DrivingClient(DrivingController):
 
         # theta 값의 범위 적당히 조정
         # 마찬가지로 steering도 상수값 조정하면 됨
-        if abs(theta) < 25 or spd < 80:
-            car_controls.steering = theta / (spd + 30)
-
-            
-        else:
-            r = max(abs(ways[tg][0]), abs(ways[tg][1]))
-            alpha = math.asin(math.sqrt(ways[tg][0] ** 2 + ways[tg][1] ** 2) / (2 * r)) * 2
-            beta = alpha * spd * 0.12 / r
-            beta = beta if theta >= 0 else -beta
-            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 0.95
+        car_controls.steering = theta / 120
 
 
 
@@ -164,7 +155,7 @@ class DrivingClient(DrivingController):
         #         pass
         #     elif angles[-1] < -90 and middle < 5:
 
-        if abs(angles[-1]) > 90 and spd > 50:
+        if abs(angles[-1]) > 90 and spd > 90:
             car_controls.throttle = 0.1
 
 
