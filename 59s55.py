@@ -72,8 +72,7 @@ class DrivingClient(DrivingController):
             ts = []
             for i in range(20):
                 C = 180 - bo[i] - (angles[i+1] - angles[i])
-                temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
-                A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
+                A =  math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
                 bo.append(A)
                 target = 180 - C - A
                 ts.append(target)
@@ -92,8 +91,7 @@ class DrivingClient(DrivingController):
             ts = []
             for i in range(20):
                 C = 180 - bo[i] - (angles[i+1] - angles[i])
-                temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
-                A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
+                A = math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
                 bo.append(A)
                 target = 180 - C - A
                 ts.append(target)
