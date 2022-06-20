@@ -16,7 +16,7 @@ class DrivingClient(DrivingController):
         self.is_debug = False
 
         # api or keyboard
-        self.enable_api_control = False # True(Controlled by code) /False(Controlled by keyboard)
+        self.enable_api_control = True # True(Controlled by code) /False(Controlled by keyboard)
         super().set_enable_api_control(self.enable_api_control)
 
         self.track_type = 99
@@ -70,7 +70,7 @@ class DrivingClient(DrivingController):
             angles = [0,] + sensing_info.track_forward_angles
             bo = [90, ]
             ts = []
-            for i in range(10):
+            for i in range(20):
                 C = 180 - bo[i] - (angles[i+1] - angles[i])
                 A =  math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
                 bo.append(A)
@@ -79,7 +79,7 @@ class DrivingClient(DrivingController):
 
             # way point 각도
             ways = []
-            for j in range(10): 
+            for j in range(20): 
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
 
 
@@ -89,7 +89,7 @@ class DrivingClient(DrivingController):
             angles = [0, ] + [-angle for angle in sensing_info.track_forward_angles]
             bo = [90, ]
             ts = []
-            for i in range(10):
+            for i in range(20):
                 C = 180 - bo[i] - (angles[i+1] - angles[i])
                 A = math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
                 bo.append(A)
@@ -97,27 +97,39 @@ class DrivingClient(DrivingController):
                 ts.append(target)
 
             ways = []
-            for j in range(10):
+            for j in range(20):
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
 
         if spd < 120:
             tg = 5
-        else:
+        elif spd < 140:
             tg = 7
-
+        else:
+            tg = 9
 
         theta = math.atan(ways[tg][1] / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
 
-        # if spd < 120:
-        #     car_controls.steering = theta / 120
-        # else:
-        #     car_controls.steering = theta / 85
+        if abs(angles[tg+1]) < 45:
+            if spd < 140:
+                car_controls.steering = theta / 120
+            else:
+                car_controls.steering = theta / (spd+20)
+        else:
+            r = max(abs(ways[tg][0]), abs(ways[tg][1]))
+            alpha = math.asin(math.sqrt(ways[tg][0] ** 2 + ways[tg][1] ** 2) / (2 * r)) * 2
+            beta = alpha * spd * 0.12 / r
+            beta = beta if theta >= 0 else -beta
+            car_controls.steering = beta - sensing_info.moving_angle * math.pi / 180
+            print(beta)
+
+
+
 
 
         # if abs(theta) < 5 and abs(sensing_info.moving_angle) < 5:
         #     car_controls.steering = 0
-        # else:
+        # elif angles[-1] > 90 and 
 
 
 
@@ -144,11 +156,11 @@ class DrivingClient(DrivingController):
 
 
         # 아웃 인 아웃 구현
-        # if abs(sensing_info.moving_angle) < 5 and abs(theta) < 3:
+        # if abs(sensing_info.moving_angle) < 5 and abs(theta) < 5:
         #     car_controls.steering = 0
-            # if angles[-1] > 90 and middle > -5:
-            #     pass
-            # elif angles[-1] < -90 and middle < 5:
+        #     if angles[-1] > 90 and middle > -5:
+        #         pass
+        #     elif angles[-1] < -90 and middle < 5:
 
 
 
