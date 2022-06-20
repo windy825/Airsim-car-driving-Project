@@ -104,9 +104,9 @@ class DrivingClient(DrivingController):
 
         # 조절해서 쓰기
         if spd < 110:
-            tg = 2
+            tg = 3
         elif spd < 130:
-            tg = 4
+            tg = 5
         elif spd < 150:
             tg = 6
         else:
@@ -160,9 +160,14 @@ class DrivingClient(DrivingController):
         #         pass
         #     elif angles[-1] < -90 and middle < 5:
 
-        if abs(angles[-3]) > 90 and spd > 60:
+
+        if not abs(theta) < 10 and spd > 160:
+            car_controls.throttle = 0.1
+        if abs(angles[-1]) > 120 and spd > 100:
             car_controls.throttle = 0
             car_controls.brake = 1
+            if abs(theta) > 60:
+                car_controls.steering = 1 if theta >= 0 else -1
 
 
         
