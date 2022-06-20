@@ -103,6 +103,8 @@ class DrivingClient(DrivingController):
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
 
+
+        # 조절해서 쓰기
         if spd < 120:
             tg = 5
         elif spd < 140:
@@ -110,9 +112,19 @@ class DrivingClient(DrivingController):
         else:
             tg = 9
 
-        theta = math.atan(ways[tg][1] / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
 
-        if abs(angles[tg+2]) < 49:
+
+        target = ways[tg][:]
+
+        # 아래 부분에 원하는 좌표 넣기
+
+        # target = 
+
+        theta = math.atan(target[1] / target[0]) * 180 / math.pi - sensing_info.moving_angle
+
+        # theta 값의 범위 적당히 조정
+        # 마찬가지로 steering도 상수값 조정하면 됨
+        if abs(theta) < 20:
             if spd < 140:
                 car_controls.steering = theta / 120
             else:
@@ -123,16 +135,6 @@ class DrivingClient(DrivingController):
             beta = alpha * spd * 0.12 / r
             beta = beta if theta >= 0 else -beta
             car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 1
-            print(beta)
-
-
-
-
-
-        # if abs(theta) < 5 and abs(sensing_info.moving_angle) < 5:
-        #     car_controls.steering = 0
-        # elif angles[-1] > 90 and 
-
 
 
 
@@ -165,17 +167,6 @@ class DrivingClient(DrivingController):
         #     elif angles[-1] < -90 and middle < 5:
 
 
-
-        
-
-        # racing line에 따른 경로 최적화
-
-
-        # M = [ways[7][0]/2, ways[7][1]/2]
-        # D = math.sqrt(M[0]**2 + M[1]**2)
-        # r = 100
-        # alpha = math.asin(D / r)
-        # theta = 
 
         
         if self.is_debug:

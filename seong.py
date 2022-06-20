@@ -5,7 +5,11 @@ from DrivingInterface.drive_controller import DrivingController
 
 
 before = 0
+accident_step = 0
+recovery_count = 0
+accident_count = 0
 class DrivingClient(DrivingController):
+
     def __init__(self):
         # =========================================================== #
         #  Area for member variables =============================== #
@@ -31,6 +35,7 @@ class DrivingClient(DrivingController):
         super().__init__()
     
     def control_driving(self, car_controls, sensing_info):
+        global accident_count, recovery_count, accident_step
 
         # =========================================================== #
         # Area for writing code about driving rule ================= #
@@ -123,15 +128,6 @@ class DrivingClient(DrivingController):
             beta = alpha * spd * 0.12 / r
             beta = beta if theta >= 0 else -beta
             car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 1
-            print(beta)
-
-
-
-
-
-        # if abs(theta) < 5 and abs(sensing_info.moving_angle) < 5:
-        #     car_controls.steering = 0
-        # elif angles[-1] > 90 and 
 
 
 
@@ -140,21 +136,21 @@ class DrivingClient(DrivingController):
         # 끝
         # 좌표는 ways에 순서대로
 
-        # obs = []
-        # near = points[0] * math.cos((90 - angles[1]) * math.pi / 180) + points[1] * math.cos(bo[1] * math.pi / 180)
-        # for obj in sensing_info.track_forward_obstacles:
-        #     d, m = obj['dist'] - near, obj['to_middle']
-        #     if d <= 0:
-        #         n, k = -1, obj['dist']
-        #         ang = (90 - angles[n+1]) * math.pi / 180
-        #         obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang)])
+        obs = []
+        near = points[0] * math.cos((90 - angles[1]) * math.pi / 180) + points[1] * math.cos(bo[1] * math.pi / 180)
+        for obj in sensing_info.track_forward_obstacles:
+            d, m = obj['dist'] - near, obj['to_middle']
+            if d <= 0:
+                n, k = -1, obj['dist']
+                ang = (90 - angles[n+1]) * math.pi / 180
+                obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang)])
     
-        #     else:
-        #         n, k = int(d // 10), d % 10
-        #         if n+2 > 10:
-        #             break
-        #         ang = (90 - angles[n+1]) * math.pi / 180
-        #         obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
+            else:
+                n, k = int(d // 10), d % 10
+                if n+2 > 10:
+                    break
+                ang = (90 - angles[n+1]) * math.pi / 180
+                obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
 
 
         # 아웃 인 아웃 구현
@@ -164,18 +160,41 @@ class DrivingClient(DrivingController):
         #         pass
         #     elif angles[-1] < -90 and middle < 5:
 
+        if spd > 10:
+            accident_step = 0
+            recovery_count = 0
+            accident_count = 0
+
+
+        if sensing_info.lap_progress > 0.5 and accident_step == 0 and abs(spd) < 1.0:
+            accident_count += 1
+        
+        if accident_count > 8:
+            accident_step = 1
+
+        if accident_step == 1:
+            recovery_count += 1
+            car_controls.steering = -1
+            car_controls.throttle = -1
+            car_controls.brake = 0
+
+        if recovery_count > 12:
+            accident_step = 2
+            recovery_count = 0
+            accident_count = 0
+
+        if accident_step == 2:
+            car_controls.steering = 0
+            car_controls.throttle = 1
+            car_controls.brake = 1
+            if sensing_info.speed > -1:
+                accident_step = 0
+                car_controls.throttle = 1
+                car_controls.brake = 0
+        
 
 
         
-
-        # racing line에 따른 경로 최적화
-
-
-        # M = [ways[7][0]/2, ways[7][1]/2]
-        # D = math.sqrt(M[0]**2 + M[1]**2)
-        # r = 100
-        # alpha = math.asin(D / r)
-        # theta = 
 
         
         if self.is_debug:
