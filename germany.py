@@ -56,7 +56,7 @@ class DrivingClient(DrivingController):
             print("=========================================================")
 
         # half_load_width = self.half_road_limit - 1.25
-        car_controls.throttle = 1
+        car_controls.throttle = 1 if sensing_info.speed < 180 else 0.6
         car_controls.brake = 0
 
 
@@ -83,8 +83,6 @@ class DrivingClient(DrivingController):
             for j in range(20): 
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
 
-
-
         else:
             points = [-middle,] + sensing_info.distance_to_way_points
             angles = [0, ] + [-angle for angle in sensing_info.track_forward_angles]
@@ -102,15 +100,16 @@ class DrivingClient(DrivingController):
             for j in range(20):
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
-
+        tg = 6
 
         # 조절해서 쓰기
+        if spd < 65:
+            tg = 2
         if spd < 120:
-            tg = 5
-        elif spd < 140:
-            tg = 7
+            tg = 4
         else:
-            tg = 9
+            tg = 5
+
 
 
 
@@ -124,17 +123,16 @@ class DrivingClient(DrivingController):
 
         # theta 값의 범위 적당히 조정
         # 마찬가지로 steering도 상수값 조정하면 됨
-        if abs(theta) < 20:
-            if spd < 140:
-                car_controls.steering = theta / 120
-            else:
-                car_controls.steering = theta / (spd+20)
+        if abs(theta) < 25 or spd < 80:
+            car_controls.steering = theta / (spd + 30)
+
+            
         else:
             r = max(abs(ways[tg][0]), abs(ways[tg][1]))
             alpha = math.asin(math.sqrt(ways[tg][0] ** 2 + ways[tg][1] ** 2) / (2 * r)) * 2
             beta = alpha * spd * 0.12 / r
             beta = beta if theta >= 0 else -beta
-            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 1
+            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 0.95
 
 
 
@@ -142,21 +140,21 @@ class DrivingClient(DrivingController):
         # 끝
         # 좌표는 ways에 순서대로
 
-        # obs = []
-        # near = points[0] * math.cos((90 - angles[1]) * math.pi / 180) + points[1] * math.cos(bo[1] * math.pi / 180)
-        # for obj in sensing_info.track_forward_obstacles:
-        #     d, m = obj['dist'] - near, obj['to_middle']
-        #     if d <= 0:
-        #         n, k = -1, obj['dist']
-        #         ang = (90 - angles[n+1]) * math.pi / 180
-        #         obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang)])
+        obs = []
+        near = points[0] * math.cos((90 - angles[1]) * math.pi / 180) + points[1] * math.cos(bo[1] * math.pi / 180)
+        for obj in sensing_info.track_forward_obstacles:
+            d, m = obj['dist'] - near, obj['to_middle']
+            if d <= 0:
+                n, k = -1, obj['dist']
+                ang = (90 - angles[n+1]) * math.pi / 180
+                obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang)])
     
-        #     else:
-        #         n, k = int(d // 10), d % 10
-        #         if n+2 > 10:
-        #             break
-        #         ang = (90 - angles[n+1]) * math.pi / 180
-        #         obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
+            else:
+                n, k = int(d // 10), d % 10
+                if n+2 > 10:
+                    break
+                ang = (90 - angles[n+1]) * math.pi / 180
+                obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
 
 
         # 아웃 인 아웃 구현
@@ -166,6 +164,8 @@ class DrivingClient(DrivingController):
         #         pass
         #     elif angles[-1] < -90 and middle < 5:
 
+        if abs(angles[-1]) > 90 and spd > 50:
+            car_controls.throttle = 0.1
 
 
         

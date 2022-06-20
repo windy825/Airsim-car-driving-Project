@@ -160,37 +160,41 @@ class DrivingClient(DrivingController):
         #         pass
         #     elif angles[-1] < -90 and middle < 5:
 
-        if spd > 10:
-            accident_step = 0
-            recovery_count = 0
-            accident_count = 0
+        # if spd > 10:
+        #     accident_step = 0
+        #     recovery_count = 0
+        #     accident_count = 0
 
 
-        if sensing_info.lap_progress > 0.5 and accident_step == 0 and abs(spd) < 1.0:
-            accident_count += 1
+        # if sensing_info.lap_progress > 0.5 and accident_step == 0 and abs(spd) < 1.0:
+        #     accident_count += 1
         
-        if accident_count > 8:
-            accident_step = 1
+        # if accident_count > 8:
+        #     accident_step = 1
 
-        if accident_step == 1:
-            recovery_count += 1
-            car_controls.steering = -1
-            car_controls.throttle = -1
-            car_controls.brake = 0
+        # if accident_step == 1:
+        #     recovery_count += 1
+        #     car_controls.steering = -1
+        #     car_controls.throttle = -1
+        #     car_controls.brake = 0
 
-        if recovery_count > 12:
-            accident_step = 2
-            recovery_count = 0
-            accident_count = 0
+        # if recovery_count > 12:
+        #     accident_step = 2
+        #     recovery_count = 0
+        #     accident_count = 0
 
-        if accident_step == 2:
-            car_controls.steering = 0
-            car_controls.throttle = 1
-            car_controls.brake = 1
-            if sensing_info.speed > -1:
-                accident_step = 0
-                car_controls.throttle = 1
-                car_controls.brake = 0
+        # if accident_step == 2:
+        #     car_controls.steering = 0
+        #     car_controls.throttle = 1
+        #     car_controls.brake = 1
+        #     if sensing_info.speed > -1:
+        #         accident_step = 0
+        #         car_controls.throttle = 1
+        #         car_controls.brake = 0
+
+
+        # if not sensing_info.moving_forward:
+
         
 
 
