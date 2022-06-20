@@ -1,4 +1,4 @@
-import math
+import math, time
 from DrivingInterface.drive_controller import DrivingController
 
 class DrivingClient(DrivingController):
@@ -29,6 +29,9 @@ class DrivingClient(DrivingController):
 
 
     def control_driving(self, car_controls, sensing_info):
+        # 프로그램 실행 시간
+        start_time = time.time()
+        
         # 0.5 단위로 바꾸기
         def change(value):
             answer = round(abs(value), 1)
@@ -83,11 +86,6 @@ class DrivingClient(DrivingController):
             ways = []
             for j in range(10):
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
-
-
-
-            theta = sum(ts[:6 if sensing_info.speed < 120 else 7]) - 90 - sensing_info.moving_angle
-            car_controls.steering = theta / (120 if sensing_info.speed < 120 else 80) 
             
         else:
             points = [-middle,] + sensing_info.distance_to_way_points
@@ -105,8 +103,7 @@ class DrivingClient(DrivingController):
             for j in range(10):
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
-            theta = 90 - sum(ts[:6 if sensing_info.speed < 120 else 7]) - sensing_info.moving_angle
-            car_controls.steering = theta / (100 if sensing_info.speed < 100 else 55) 
+
 
         # 끝
         # 좌표는 ways에 순서대로
@@ -149,7 +146,8 @@ class DrivingClient(DrivingController):
         car_a = 200
         car_b = x//2 + int(change(middle)//0.5)
 
-        
+        # 도로가 시작되는 인덱스 리스트
+        road_start_idx = [0] * (car_a+1)
         # 중앙선
         temp = [car_a, car_b - int(change(middle) // 0.5)]
         half_road = int(change(self.half_road_limit) // 0.5)
@@ -173,6 +171,8 @@ class DrivingClient(DrivingController):
                         
                         if 0 <= yyy + giving + v < x:
                             MAP[xxx + j][yyy + giving + v] =  '|'
+                            if not road_start_idx[xxx+j]:
+                                road_start_idx[xxx+j] = yyy + giving + v
                     cnt += 1
             temp = [xxx, yyy]
 
@@ -197,7 +197,6 @@ class DrivingClient(DrivingController):
             MAP[car_a][car_b - 3 + i] = 'A' 
 
 
-
         # 상대 차 중심 위치 (opp_a, opp_b)
         if sensing_info.opponent_cars_info and abs(sensing_info.opponent_cars_info['dist']) < 95:
             opp_a = 200 - int(change(sensing_info.opponent_cars_info['dist'] // 0.5))
@@ -210,12 +209,11 @@ class DrivingClient(DrivingController):
         path = []
         for i in range(car_a -10, 0, -1):
             if 'X' in MAP[i]:
-                line = ''.join(MAP[i])
-                start = min(line.find('|') if line.find('|') != -1 else 200, line.find('/') if line.find('/') != -1 else 200) - 5
+                start = road_start_idx[i] - 5
                 end = start + 2 * half_road + 10
                 print(start, end)
                 for j in range(start, end):
-                    if 0 <= j < x and line[j] not in '/X':
+                    if 0 <= j < x and MAP[i][j] not in '/X':
                         path.append([i,j])
                         MAP[i][j] = 'O'
                 break
@@ -230,26 +228,84 @@ class DrivingClient(DrivingController):
 
 
         print('ㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁ')
-        for i in range(50,210):
+        for i in range(0,car_a+1):
             print(''.join(MAP[i]))        
-        print(car_controls.steering)
 
         
         if self.is_debug:
             print("[MyCar] steering:{}, throttle:{}, brake:{}".format(car_controls.steering, car_controls.throttle, car_controls.brake))
 
-        #
-        # Editing area ends
-        # ==========================================================#
+        temp = 0
+        for i in range(car_a-70, 80, -1):
+            temp += road_start_idx[i] - road_start_idx[i-1]
+        yes_speed = 0 if sensing_info.speed < 150 else sensing_info.speed - 150
+        yes_this = int(abs(temp)/40 + yes_speed/10)
+        # yes_that = int(sensing_info.speed/80)
+        # adding = sum(ts[:6 + (yes_this+yes_that if yes_this + yes_that <= 20 else 20)])
+        adding = sum(ts[:6 + (yes_this if yes_this <= 14 else 14)])
+
+        print(temp)
+
+        if middle >= 0:
+            theta = adding - 90 - sensing_info.moving_angle
+        else:
+            theta = 90 - adding - sensing_info.moving_angle
+
+        car_controls.steering = theta / (145 - abs(temp))
+        if sensing_info.speed > 165 and abs(temp) > 55:
+            car_controls.steering *= 5.1
+        print(car_controls.steering)
+            
+
+        # if temp < -40:
+        #     if sensing_info.speed > 180:
+        #         car_controls.steering = theta / 5
+        #     elif sensing_info.speed > 170:
+        #         car_controls.steering = theta / 15
+        #     elif sensing_info.speed > 160:
+        #         car_controls.steering = theta / 15
+        #     elif sensing_info.speed > 150:
+        #         car_controls.steering = theta / 35
+        #     elif sensing_info.speed > 140:
+        #         car_controls.steering = theta / 45
+        #     elif sensing_info.speed > 130:
+        #         car_controls.steering = theta / 60
+        #     elif sensing_info.speed > 120:
+        #         car_controls.steering = theta / 80
+        #     elif sensing_info.speed > 110:
+        #         car_controls.steering = theta / 100
+        #     elif sensing_info.speed > 100:
+        #         car_controls.steering = theta / 140
+        # if temp < -10:
+        #     if sensing_info.speed > 180:
+        #         car_controls.steering = theta / 5
+        #     elif sensing_info.speed > 170:
+        #         car_controls.steering = theta / 5
+        #     elif sensing_info.speed > 160:
+        #         car_controls.steering = theta / 10
+        #     elif sensing_info.speed > 150:
+        #         car_controls.steering = theta / 20
+        #     elif sensing_info.speed > 140:
+        #         car_controls.steering = theta / 50
+        #     elif sensing_info.speed > 130:
+        #         car_controls.steering = theta / 60
+        #     elif sensing_info.speed > 120:
+        #         car_controls.steering = theta / 75
+        #     elif sensing_info.speed > 110:
+        #         car_controls.steering = theta / 100
+        #     elif sensing_info.speed > 100:
+        #         car_controls.steering = theta / 140
+        # else:
+        #         car_controls.steering = theta / 130
+
+
+        # 프로그램 종료 시간
+        # print(time.time() - start_time)
+
+
         return car_controls
 
 
-    # ============================
-    # If you have NOT changed the <settings.json> file
-    # ===> player_name = ""
-    #
-    # If you changed the <settings.json> file
-    # ===> player_name = "My car name" (specified in the json file)  ex) Car1
     # ============================
     def set_player_name(self):
         player_name = ""
