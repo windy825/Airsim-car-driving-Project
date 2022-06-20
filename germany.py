@@ -56,7 +56,7 @@ class DrivingClient(DrivingController):
             print("=========================================================")
 
         # half_load_width = self.half_road_limit - 1.25
-        car_controls.throttle = 1 if sensing_info.speed < 180 else 0.6
+        car_controls.throttle = 1
         car_controls.brake = 0
 
 
@@ -103,12 +103,14 @@ class DrivingClient(DrivingController):
         tg = 6
 
         # 조절해서 쓰기
-        if spd < 65:
+        if spd < 110:
             tg = 2
-        if spd < 120:
+        elif spd < 130:
             tg = 4
+        elif spd < 150:
+            tg = 6
         else:
-            tg = 5
+            tg = 7
 
 
 
@@ -123,7 +125,10 @@ class DrivingClient(DrivingController):
 
         # theta 값의 범위 적당히 조정
         # 마찬가지로 steering도 상수값 조정하면 됨
-        car_controls.steering = theta / 120
+        if spd < 100:
+            car_controls.steering = theta / 120
+        else:
+            car_controls.steering = theta / 100
 
 
 
@@ -155,8 +160,9 @@ class DrivingClient(DrivingController):
         #         pass
         #     elif angles[-1] < -90 and middle < 5:
 
-        if abs(angles[-1]) > 90 and spd > 90:
-            car_controls.throttle = 0.1
+        if abs(angles[-3]) > 90 and spd > 60:
+            car_controls.throttle = 0
+            car_controls.brake = 1
 
 
         
