@@ -291,6 +291,11 @@ class DrivingClient(DrivingController):
             car_controls.steering = min(target, key= lambda x : abs(x - car_controls.steering))
 
 
+        print('ㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁㅁ')
+        for i in range(0,car_a+1):
+            print(''.join(MAP[i]))        
+        print(car_controls.steering)
+
         
         if self.is_debug:
             print("[MyCar] steering:{}, throttle:{}, brake:{}".format(car_controls.steering, car_controls.throttle, car_controls.brake))
