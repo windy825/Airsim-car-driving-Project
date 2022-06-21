@@ -5,9 +5,9 @@ from DrivingInterface.drive_controller import DrivingController
 
 
 before = 0
-accident_step = 0
-recovery_count = 0
-accident_count = 0
+# accident_step = 0
+# recovery_count = 0
+# accident_count = 0
 class DrivingClient(DrivingController):
 
     def __init__(self):
@@ -35,7 +35,7 @@ class DrivingClient(DrivingController):
         super().__init__()
     
     def control_driving(self, car_controls, sensing_info):
-        global accident_count, recovery_count, accident_step
+        # global accident_count, recovery_count, accident_step
 
         # =========================================================== #
         # Area for writing code about driving rule ================= #
@@ -68,44 +68,25 @@ class DrivingClient(DrivingController):
         # way points 좌표 시작
         middle = sensing_info.to_middle
         spd = sensing_info.speed
+        plag = 1 if middle >= 0 else -1
 
 
-        if middle >= 0:
-            points = [middle,] + sensing_info.distance_to_way_points
-            angles = [0,] + sensing_info.track_forward_angles
-            bo = [90, ]
-            ts = []
-            for i in range(20):
-                C = 180 - bo[i] - (angles[i+1] - angles[i])
-                temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
-                A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
-                bo.append(A)
-                target = 180 - C - A
-                ts.append(target)
+        points = [middle * plag,] + sensing_info.distance_to_way_points
+        angles = [0,] + [angle * plag for angle in sensing_info.track_forward_angles]
+        bo = [90, ]
+        ts = []
+        for i in range(20):
+            C = 180 - bo[i] - (angles[i+1] - angles[i])
+            temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
+            A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
+            bo.append(A)
+            ts.append(180 - C - A)
 
-            # way point 각도
-            ways = []
-            for j in range(20): 
-                ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
+        # way point 좌표
+        ways = []
+        for j in range(20): 
+            ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * plag * math.cos(sum(ts[:j+1]) * math.pi / 180)])
 
-
-
-        else:
-            points = [-middle,] + sensing_info.distance_to_way_points
-            angles = [0, ] + [-angle for angle in sensing_info.track_forward_angles]
-            bo = [90, ]
-            ts = []
-            for i in range(20):
-                C = 180 - bo[i] - (angles[i+1] - angles[i])
-                temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
-                A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
-                bo.append(A)
-                target = 180 - C - A
-                ts.append(target)
-
-            ways = []
-            for j in range(20):
-                ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
 
         if spd < 120:
@@ -117,19 +98,17 @@ class DrivingClient(DrivingController):
 
         theta = math.atan(ways[tg][1] / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
 
-        if abs(angles[tg+2]) < 49:
-            if spd < 140:
-                car_controls.steering = theta / 120
+        if abs(angles[tg+2]) < 47:
+            if spd < 120:
+                car_controls.steering = theta / 100
             else:
-                car_controls.steering = theta / (spd+20)
+                car_controls.steering = theta / (spd+10)
         else:
             r = max(abs(ways[tg][0]), abs(ways[tg][1]))
             alpha = math.asin(math.sqrt(ways[tg][0] ** 2 + ways[tg][1] ** 2) / (2 * r)) * 2
             beta = alpha * spd * 0.12 / r
             beta = beta if theta >= 0 else -beta
-            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 1
-
-
+            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 0.878
 
 
 

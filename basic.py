@@ -6,6 +6,7 @@ from DrivingInterface.drive_controller import DrivingController
 
 before = 0
 class DrivingClient(DrivingController):
+
     def __init__(self):
         # =========================================================== #
         #  Area for member variables =============================== #
@@ -63,42 +64,25 @@ class DrivingClient(DrivingController):
         # way points 좌표 시작
         middle = sensing_info.to_middle
         spd = sensing_info.speed
+        plag = 1 if middle >= 0 else -1
 
 
-        if middle >= 0:
-            points = [middle,] + sensing_info.distance_to_way_points
-            angles = [0,] + sensing_info.track_forward_angles
-            bo = [90, ]
-            ts = []
-            for i in range(20):
-                C = 180 - bo[i] - (angles[i+1] - angles[i])
-                A =  math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
-                bo.append(A)
-                target = 180 - C - A
-                ts.append(target)
+        points = [middle * plag,] + sensing_info.distance_to_way_points
+        angles = [0,] + [angle * plag for angle in sensing_info.track_forward_angles]
+        bo = [90, ]
+        ts = []
+        for i in range(20):
+            C = 180 - bo[i] - (angles[i+1] - angles[i])
+            temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
+            A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
+            bo.append(A)
+            ts.append(180 - C - A)
 
-            # way point 각도
-            ways = []
-            for j in range(20): 
-                ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
+        # way point 좌표
+        ways = []
+        for j in range(20): 
+            ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * plag * math.cos(sum(ts[:j+1]) * math.pi / 180)])
 
-
-
-        else:
-            points = [-middle,] + sensing_info.distance_to_way_points
-            angles = [0, ] + [-angle for angle in sensing_info.track_forward_angles]
-            bo = [90, ]
-            ts = []
-            for i in range(20):
-                C = 180 - bo[i] - (angles[i+1] - angles[i])
-                A = math.asin((points[i] * math.sin(C * math.pi / 180)) / points[i+1]) * 180 / math.pi
-                bo.append(A)
-                target = 180 - C - A
-                ts.append(target)
-
-            ways = []
-            for j in range(20):
-                ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
 
         if spd < 120:
@@ -110,70 +94,24 @@ class DrivingClient(DrivingController):
 
         theta = math.atan(ways[tg][1] / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
 
-        if abs(angles[tg+2]) < 49:
-            if spd < 140:
-                car_controls.steering = theta / 120
+        if abs(angles[tg+2]) < 47:
+            if spd < 120:
+                car_controls.steering = theta / 100
             else:
-                car_controls.steering = theta / (spd+20)
+                car_controls.steering = theta / (spd+10)
         else:
             r = max(abs(ways[tg][0]), abs(ways[tg][1]))
             alpha = math.asin(math.sqrt(ways[tg][0] ** 2 + ways[tg][1] ** 2) / (2 * r)) * 2
             beta = alpha * spd * 0.12 / r
             beta = beta if theta >= 0 else -beta
-            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 1
-            print(beta)
-
-
-
-
-
-        # if abs(theta) < 5 and abs(sensing_info.moving_angle) < 5:
-        #     car_controls.steering = 0
-        # elif angles[-1] > 90 and 
-
-
+            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 0.878
 
 
 
         # 끝
         # 좌표는 ways에 순서대로
 
-        # obs = []
-        # near = points[0] * math.cos((90 - angles[1]) * math.pi / 180) + points[1] * math.cos(bo[1] * math.pi / 180)
-        # for obj in sensing_info.track_forward_obstacles:
-        #     d, m = obj['dist'] - near, obj['to_middle']
-        #     if d <= 0:
-        #         n, k = -1, obj['dist']
-        #         ang = (90 - angles[n+1]) * math.pi / 180
-        #         obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang)])
-    
-        #     else:
-        #         n, k = int(d // 10), d % 10
-        #         if n+2 > 10:
-        #             break
-        #         ang = (90 - angles[n+1]) * math.pi / 180
-        #         obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
-
-
-        # 아웃 인 아웃 구현
-        # if abs(sensing_info.moving_angle) < 5 and abs(theta) < 5:
-        #     car_controls.steering = 0
-        #     if angles[-1] > 90 and middle > -5:
-        #         pass
-        #     elif angles[-1] < -90 and middle < 5:
-
-
-
         
-
-        # racing line에 따른 경로 최적화
-
-
-        # M = [ways[7][0]/2, ways[7][1]/2]
-        # D = math.sqrt(M[0]**2 + M[1]**2)
-        # r = 100
-        # alpha = math.asin(D / r)
-        # theta = 
 
         
         if self.is_debug:
