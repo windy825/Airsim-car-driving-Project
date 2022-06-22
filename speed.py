@@ -139,19 +139,9 @@ class DrivingClient(DrivingController):
 
         if abs(sum(sensing_info.track_forward_angles[10:])) > 1000 and angles[-1] < 130 and spd > 110:
             car_controls.throttle = -0.2
-            print(sensing_info.track_forward_angles[0], sensing_info.track_forward_angles[1])
-            if abs(angles[1]) < 5:
-                # if sensing_info.track_forward_angles[0] >= 0:
-                #     car_controls.steering = (math.atan((-4-middle) / 10) * 180 / math.pi - sensing_info.moving_angle) / 120
-                #     print(car_controls.steering)
-                # else:
-                #     car_controls.steering = (math.atan((4-middle) / 10) * 180 / math.pi - sensing_info.moving_angle) / 120
-                #     print("???")
-                pass
-            else:
+            if abs(angles[1]) > 5:
                 car_controls.steering = 1 if angles[1] >= 0 else -1
 
-        # print(sensing_info.track_forward_angles)
 
 
 
