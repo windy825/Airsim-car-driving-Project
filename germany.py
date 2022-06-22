@@ -100,11 +100,10 @@ class DrivingClient(DrivingController):
             for j in range(20):
                 ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), points[j+1] * math.cos(sum(ts[:j+1]) * math.pi / 180)])
             
-        tg = 6
 
         # 조절해서 쓰기
         if spd < 110:
-            tg = 3
+            tg = 4
         elif spd < 130:
             tg = 5
         elif spd < 150:
@@ -125,13 +124,6 @@ class DrivingClient(DrivingController):
 
         # theta 값의 범위 적당히 조정
         # 마찬가지로 steering도 상수값 조정하면 됨
-        if spd < 100:
-            car_controls.steering = theta / 120
-        else:
-            car_controls.steering = theta / 100
-
-
-
 
         # 끝
         # 좌표는 ways에 순서대로
@@ -154,19 +146,24 @@ class DrivingClient(DrivingController):
 
 
         # 아웃 인 아웃 구현
-        # if abs(sensing_info.moving_angle) < 5 and abs(theta) < 5:
-        #     car_controls.steering = 0
-        #     if angles[-1] > 90 and middle > -5:
-        #         pass
-        #     elif angles[-1] < -90 and middle < 5:
+        if angles[1] < 5 and angles[tg] < 5:
+            print(1)
+            car_controls.steering = 0
+            if angles[-1] > 90 and middle > -5:
+                theta = math.atan(target[1] / (target[0]+4)) * 180 / math.pi - sensing_info.moving_angle
+            elif angles[-1] < -90 and middle < 5:
+                theta = math.atan(target[1] / (target[0]-4)) * 180 / math.pi - sensing_info.moving_angle
+
+        if spd < 110:
+            car_controls.steering = theta / 120
+        else:
+            car_controls.steering = theta / 100
 
 
-        if not abs(theta) < 10 and spd > 160:
-            car_controls.throttle = 0.1
-        if abs(angles[-1]) > 120 and spd > 100:
+        if abs(angles[-1]) > 120 and spd > 130:
             car_controls.throttle = 0
-            car_controls.brake = 1
-            if abs(theta) > 60:
+            car_controls.brake = 0.5
+            if abs(theta) > 40:
                 car_controls.steering = 1 if theta >= 0 else -1
 
 
