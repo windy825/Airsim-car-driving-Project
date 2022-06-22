@@ -20,7 +20,7 @@ class DrivingClient(DrivingController):
         self.is_debug = False
 
         # api or keyboard
-        self.enable_api_control = False # True(Controlled by code) /False(Controlled by keyboard)
+        self.enable_api_control = True # True(Controlled by code) /False(Controlled by keyboard)
         super().set_enable_api_control(self.enable_api_control)
 
         self.track_type = 99
@@ -68,6 +68,8 @@ class DrivingClient(DrivingController):
         # way points 좌표 시작
         middle = sensing_info.to_middle
         spd = sensing_info.speed
+
+        # 오른쪽인가 왼쪽인가
         plag = 1 if middle >= 0 else -1
 
 
@@ -100,9 +102,9 @@ class DrivingClient(DrivingController):
 
         if abs(angles[tg+2]) < 47:
             if spd < 120:
-                car_controls.steering = theta / 100
+                car_controls.steering = theta / 120
             else:
-                car_controls.steering = theta / (spd+10)
+                car_controls.steering = theta / 100
         else:
             r = max(abs(ways[tg][0]), abs(ways[tg][1]))
             alpha = math.asin(math.sqrt(ways[tg][0] ** 2 + ways[tg][1] ** 2) / (2 * r)) * 2
@@ -131,7 +133,11 @@ class DrivingClient(DrivingController):
                 ang = (90 - angles[n+1] * plag) * math.pi / 180
                 obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
 
-        print(obs)
+        if abs(angles[-1]) > 120 and spd > 130:
+            car_controls.throttle = 0
+            car_controls.brake = 0.5
+            if abs(theta) > 40:
+                car_controls.steering = 1 if theta >= 0 else -1
 
         # 아웃 인 아웃 구현
         # if abs(sensing_info.moving_angle) < 5 and abs(theta) < 5:
