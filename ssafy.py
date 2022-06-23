@@ -80,7 +80,11 @@ class DrivingClient(DrivingController):
         for i in range(20):
             C = 180 - bo[i] - (angles[i+1] - angles[i])
             temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
-            A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
+            if temp > 1:
+                temp = 1
+            elif temp < -1:
+                temp = -1
+            A =  math.asin(temp) * 180 / math.pi
             bo.append(A)
             ts.append(180 - C - A)
 
@@ -138,7 +142,7 @@ class DrivingClient(DrivingController):
         # 끝
         # 좌표는 ways에 순서대로
 
-        if abs(angles[int(spd//25)]) > 42 and spd > 100:
+        if abs(angles[int(spd//20)]) > 42 and spd > 100:
             car_controls.throttle = -0.5 if spd < 120 else -1
             car_controls.brake = 1
 

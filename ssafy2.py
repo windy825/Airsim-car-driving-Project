@@ -111,21 +111,39 @@ class DrivingClient(DrivingController):
 
         # 주행 코드
 
-        if spd < 30 and sensing_info.lap_progress > 0.1:
+        if spd < 30 and sensing_info.lap_progress > 1:
             tg = 0
-        elif spd < 120:
+        elif spd < 140:
             tg = 3
-        elif spd < 160:
-            tg = 4
+        elif spd < 170:
+            tg = 5
+        else:
+            tg = 7
+
 
         theta = math.atan(ways[tg][1] / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
 
-        if abs(theta) < 10:
-            if abs(sensing_info.moving_angle - angles[1]) < 5:
-                car_controls.steering = 0
+        if abs(angles[tg]) < 25 or sensing_info.lap_progress >= 99.5:
+            ## 차량 핸들 조정을 위해 참고할 전방의 커브 값 가져오기
+            for i in range(20):
+                if abs(angles[i]) > 60:
+                    break
+            
+            ## 차량의 차선 중앙 정렬을 위한 미세 조정 값 계산
+            if 12 < i < 19:
+                if angles[i+1] * plag < 0:
+                    middle_add = (-4 + middle ) / 80 * -1
+                else:
+                    middle_add = (4 + middle) / 80 * -1
+            elif abs(middle) > 4:
+                middle_add = -middle / 100
             else:
-                car_controls.steering = (angles[1] - sensing_info.moving_angle) / spd
+                middle_add = 0
 
+            ## (참고할 전방의 커브 - 내 차량의 주행 각도) / (계산된 steer factor) 값으로 steering 값을 계산
+            set_steering = (angles[tg] * plag - sensing_info.moving_angle) / (spd * 0.7 + 0.001) + middle_add
+
+            car_controls.steering = set_steering
         else:
             r = max(abs(ways[tg][0]), abs(ways[tg][1]))
             alpha = math.asin(math.sqrt(ways[tg][0] ** 2 + ways[tg][1] ** 2) / (2 * r)) * 2
@@ -135,8 +153,8 @@ class DrivingClient(DrivingController):
 
 
 
-        if abs(angles[int(spd//25)]) > 40 and spd > 100:
-            car_controls.throttle = -0.5 if spd < 120 else -1
+        if abs(angles[int(spd//20)]) > 40 and spd > 100:
+            car_controls.throttle = -1
             car_controls.brake = 1
 
         if spd > 170 and abs(angles[-1]) > 10:
