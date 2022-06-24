@@ -68,13 +68,16 @@ class DrivingClient(DrivingController):
             self.recovery_count = 0
             self.accident_count = 0
 
-        # 출발하고 조금 뒤부터 속도가 1km/h 이하가 되면 accident_count가 1이 됨
+        # 출발 이후에 속도가 1km/h 이하가 되면 accident_count가 1씩 증가
         if sensing_info.lap_progress > 0.5 and accident_step == 0 and abs(sensing_info.speed) < 1.0:
             self.accident_count += 1
 
+        # count가 8이상 되면 현재 충돌 등으로 인해 차가 움직일 수 없다고 판단
         if self.accident_count > 8:
             accident_step = 1
 
+        # Normal Mode
+        # 여기에 주행관련 알고리즘 넣으면 될듯
         if accident_step == 0:
             # way points 좌표 시작
             middle = sensing_info.to_middle
@@ -119,8 +122,9 @@ class DrivingClient(DrivingController):
                 theta = 90 - sum(ts[:6 if sensing_info.speed < 120 else 7]) - sensing_info.moving_angle
                 car_controls.steering = theta / (120 if sensing_info.speed < 100 else 75)
 
+        # 사고로 판단
         # 회복 후진
-        if accident_step == 1:
+        elif accident_step == 1:
             self.recovery_count += 1
             car_controls.throttle = -1
             if sensing_info.moving_angle > 10:
@@ -130,14 +134,14 @@ class DrivingClient(DrivingController):
             else:
                 car_controls.steering = 0
         
-        # 다음 단계로 넘기기
-        if self.recovery_count > 12:
-            accident_step = 2
-            self.recovery_count = 0
-            self.accident_count = 0
+            # 다음 단계로 넘기기
+            if self.recovery_count > 12:
+                accident_step = 2
+                self.recovery_count = 0
+                self.accident_count = 0
         
         # 기본 운전 상태로 되돌리기 직전 과정(후진 정차)
-        if accident_step == 2:
+        elif accident_step == 2:
             car_controls.steering = 0
             car_controls.throttle = 1
             car_controls.brake = 1
