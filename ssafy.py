@@ -78,27 +78,34 @@ class DrivingClient(DrivingController):
         # 범위 
         ob_line = [round(i * 0.1, 1) for i in range(-int(half_load_width)*10, int(half_load_width)*10)]
         ob_line2 = []
-        cnt = 0
+        temp_dist = 0
+        first_ob = 0
+
         # 인식거리 안의 장애물 등록
-        for obj in sensing_info.track_forward_obstacles:
-            ob_dist, ob_middle = obj['dist'], obj['to_middle']
+        if sensing_info.track_forward_obstacles and sensing_info.track_forward_obstacles[0]['dist'] < 150:
+            for obj in sensing_info.track_forward_obstacles:
+                ob_dist, ob_middle = obj['dist'], obj['to_middle']
+                
+                if not first_ob:
+                    first_ob = ob_dist
+                if temp_dist and abs(ob_dist - temp_dist) > 40:
+                    break
 
-            if ob_start <= ob_dist <= ob_end:
-                if abs(angles[int(ob_dist/10)]) > 5:
-                    ped = 3.4
+                if ob_start <= ob_dist <= ob_end:
+                    ped = 2.5
+                    if abs(angles[int(ob_dist/10)]) > 5:
+                        ped = 3.5
+                    else:
+                        ped = 2.25
+                    ob_line = [i for i in ob_line if not ob_middle-ped <= i <= ob_middle+ped]                
+                    temp_dist = ob_dist
+                    # print(ped)
+                    
+                if not ob_line:
+                    ob_line = ob_line2[:]
+                    break
                 else:
-                    ped = 2.25
-                ob_line = [i for i in ob_line if not ob_middle-ped <= i <= ob_middle+ped]
-                cnt += 1
-            
-            if cnt == 2:
-                break
-
-            if not ob_line:
-                ob_line = ob_line2[:]
-                break
-            else:
-                ob_line2 = ob_line[:]
+                    ob_line2 = ob_line[:]
         
 
 
@@ -135,7 +142,7 @@ class DrivingClient(DrivingController):
                 car_controls.steering = set_steering
                 car_controls.steering += middle_add
         else:
-            print(angles[tg])
+            # print(angles[tg])
             k = spd * 5 / 18
             if angles[tg] < 0:
                 r = self.half_road_limit - 1.25 + middle
@@ -158,6 +165,19 @@ class DrivingClient(DrivingController):
         if spd > 170 and abs(angles[-1]) > 10:
             car_controls.throttle = -1
             car_controls.brake = 1
+
+        if ob_line and temp_dist:
+            
+            # adding1 = sensing_info.track_forward_angles[int(temp_dist/10)]/2
+            # if abs(adding1) > 10:
+            #     adding1 = 0
+            # elif -2 < adding1 < 2:
+            #     adding1 = 0
+
+            # print(adding1)
+            angle_base_obs = [(math.atan(((b) - middle if b - middle != 0 else 0.001) / (temp_dist)) * 180 / math.pi - sensing_info.moving_angle) for b in ob_line]
+            car_controls.set_steering = min(angle_base_obs, key= lambda x : abs(x - sensing_info.moving_angle)) / 40
+
 
 
         # 충돌시 탈출 코드(수정 필요)
