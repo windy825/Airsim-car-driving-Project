@@ -1,6 +1,8 @@
 import math
+from bcrypt import kdf
 
 from numpy import False_
+from sklearn.cluster import k_means
 from DrivingInterface.drive_controller import DrivingController
 
 
@@ -8,6 +10,8 @@ before = 0
 accident_step = 0
 recovery_count = 0
 accident_count = 0
+uturn_step = 0
+uturn_count = 0
 class DrivingClient(DrivingController):
 
     def __init__(self):
@@ -35,7 +39,7 @@ class DrivingClient(DrivingController):
         super().__init__()
     
     def control_driving(self, car_controls, sensing_info):
-        global accident_count, recovery_count, accident_step
+        global accident_count, recovery_count, accident_step, uturn_count, uturn_step
 
         # =========================================================== #
         # Area for writing code about driving rule ================= #
@@ -186,7 +190,21 @@ class DrivingClient(DrivingController):
                 car_controls.brake = 0
 
 
-        # if not sensing_info.moving_forward:
+        # 역방향 진행시 탈출 코드
+        if not sensing_info.moving_forward and not (accident_count + accident_step + recovery_count) and spd > 0:
+            uturn_count += 1
+            if middle >= 0:
+                uturn_step = 1
+            else:
+                uturn_step = -1
+        
+        if sensing_info.moving_forward:
+            uturn_count = 0
+
+        if uturn_count > 5:
+            car_controls.steering = uturn_step
+            car_controls.throttle = 0.5
+
 
 
 

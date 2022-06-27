@@ -1,17 +1,10 @@
 import math
-from bcrypt import kdf
 
 from numpy import False_
-from sklearn.cluster import k_means
 from DrivingInterface.drive_controller import DrivingController
 
 
 before = 0
-accident_step = 0
-recovery_count = 0
-accident_count = 0
-uturn_step = 0
-uturn_count = 0
 class DrivingClient(DrivingController):
 
     def __init__(self):
@@ -39,7 +32,6 @@ class DrivingClient(DrivingController):
         super().__init__()
     
     def control_driving(self, car_controls, sensing_info):
-        global accident_count, recovery_count, accident_step, uturn_count, uturn_step
 
         # =========================================================== #
         # Area for writing code about driving rule ================= #
@@ -72,8 +64,6 @@ class DrivingClient(DrivingController):
         # way points 좌표 시작
         middle = sensing_info.to_middle
         spd = sensing_info.speed
-
-        # 오른쪽인가 왼쪽인가
         plag = 1 if middle >= 0 else -1
 
 
@@ -97,111 +87,35 @@ class DrivingClient(DrivingController):
         for j in range(20): 
             ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * plag * math.cos(sum(ts[:j+1]) * math.pi / 180)])
 
-
-        # 장애물 좌표
-        obs = []
-        near = abs(points[0] * math.cos((90 - angles[1]) * math.pi / 180)) + points[1] * math.cos(bo[1] * math.pi / 180)
-        for obj in sensing_info.track_forward_obstacles:
-            d, m = obj['dist'] - near, obj['to_middle']
-            if d <= 0:
-                n, k = -1, obj['dist']
-                ang = (90 - angles[n+1] * plag) * math.pi / 180
-                obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang)])
-    
-            else:
-                n, k = int(d // 10), d % 10
-                if n+2 > 10:
-                    break
-                ang = (90 - angles[n+1] * plag) * math.pi / 180
-                obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang)])
-
             
 
-        # 조절해서 쓰기
         if spd < 120:
-            tg = 4
-        elif spd < 155:
             tg = 5
-        else:
+        elif spd < 140:
             tg = 7
+        else:
+            tg = 9
 
         theta = math.atan(ways[tg][1] / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
 
-        if abs(theta) < 50:
+        if abs(angles[tg+2]) < 49:
             if spd < 120:
-                car_controls.steering = theta / 120
-            # elif spd < 175:
-            #     car_controls.steering = theta / 98
-            else:
                 car_controls.steering = theta / 100
+            else:
+                car_controls.steering = theta / (spd+10)
         else:
             r = max(abs(ways[tg][0]), abs(ways[tg][1]))
             alpha = math.asin(math.sqrt(ways[tg][0] ** 2 + ways[tg][1] ** 2) / (2 * r)) * 2
             beta = alpha * spd * 0.12 / r
             beta = beta if theta >= 0 else -beta
-            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 1
+            car_controls.steering = beta - sensing_info.moving_angle * math.pi / 180
+
 
 
         # 끝
         # 좌표는 ways에 순서대로
 
-        if abs(sum(sensing_info.track_forward_angles[10:])) > 1000 and angles[-1] < 130 and spd > 110:
-            car_controls.throttle = -0.2
-            if abs(angles[1]) > 5:
-                car_controls.steering = 1 if angles[1] >= 0 else -1
-
-
-
-
-        # 충돌시 탈출 코드(수정 필요)
-
-        if spd > 10:
-            accident_step = 0
-            recovery_count = 0
-            accident_count = 0
-
-
-        if sensing_info.lap_progress > 0.5 and accident_step == 0 and abs(spd) < 1.0:
-            accident_count += 1
         
-        if accident_count > 8:
-            accident_step = 1
-
-        if accident_step == 1:
-            recovery_count += 1
-            car_controls.steering = 0
-            car_controls.throttle = -1
-            car_controls.brake = 0
-
-        if recovery_count > 20:
-            accident_step = 2
-            recovery_count = 0
-            accident_count = 0
-
-        if accident_step == 2:
-            car_controls.steering = 0
-            car_controls.throttle = 1
-            car_controls.brake = 1
-            if sensing_info.speed > -1:
-                accident_step = 0
-                car_controls.throttle = 1
-                car_controls.brake = 0
-
-
-        # 역방향 진행시 탈출 코드
-        if not sensing_info.moving_forward and not (accident_count + accident_step + recovery_count) and spd > 0:
-            uturn_count += 1
-            if middle >= 0:
-                uturn_step = 1
-            else:
-                uturn_step = -1
-        
-        if sensing_info.moving_forward:
-            uturn_count = 0
-
-        if uturn_count > 5:
-            car_controls.steering = uturn_step
-            car_controls.throttle = 0.5
 
         
         if self.is_debug:
