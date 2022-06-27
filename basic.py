@@ -1,8 +1,5 @@
 import math
-from posixpath import splitdrive
 
-from numpy import False_
-from sympy import SparseNDimArray
 from DrivingInterface.drive_controller import DrivingController
 
 
@@ -103,23 +100,22 @@ class DrivingClient(DrivingController):
         if abs(angles[tg+2]) < 49 or abs(angles[tg+1]) < 47:
             if abs(angles[-1]) > 90 and spd > 165:
                 if angles[-1] * plag >= 0:
-                    theta = math.atan((ways[tg][1] + 4) / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
+                    theta = math.atan((ways[tg][1] + 9) / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
                 else:
-                    theta = math.atan((ways[tg][1] - 4) / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
+                    theta = math.atan((ways[tg][1] - 9) / ways[tg][0]) * 180 / math.pi - sensing_info.moving_angle
                 car_controls.steering = theta / 180
             else:
                 if spd < 120:
                     car_controls.steering = theta / 85
                 else:
-                    car_controls.steering = theta / (spd+0.0001) / 0.95
+                    car_controls.steering = theta / (spd * 0.95)
 
         else:
-            print(angles[tg+1], angles[tg+2])
             r = max(abs(ways[tg][0]), abs(ways[tg][1]))
             alpha = math.asin(math.sqrt(ways[tg][0] ** 2 + ways[tg][1] ** 2) / (2 * r)) * 2
             beta = alpha * spd * 0.1 / r
             beta = beta if theta >= 0 else -beta
-            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 1.25
+            car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) * 1.15
 
 
 

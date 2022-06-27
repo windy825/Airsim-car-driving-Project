@@ -1,8 +1,4 @@
 import math
-from posixpath import splitdrive
-
-from numpy import False_
-from sympy import SparseNDimArray
 from DrivingInterface.drive_controller import DrivingController
 
 
@@ -112,7 +108,7 @@ class DrivingClient(DrivingController):
                 if spd < 120:
                     car_controls.steering = theta / 80
                 else:
-                    car_controls.steering = theta / (spd+0.01) / 0.95
+                    car_controls.steering = theta / (spd * 0.95)
 
         else:
             r = max(abs(x), abs(y))
