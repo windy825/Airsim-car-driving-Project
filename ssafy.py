@@ -1,5 +1,5 @@
 from DrivingInterface.drive_controller import DrivingController
-
+import math
 
 before = 0
 
@@ -84,15 +84,14 @@ class DrivingClient(DrivingController):
             ob_dist, ob_middle = obj['dist'], obj['to_middle']
 
             if ob_start <= ob_dist <= ob_end:
-                ped = 2.5
-                if abs(sensing_info.track_forward_angles[int(ob_dist/10)]) > 5:
+                if abs(angles[int(ob_dist/10)]) > 7 and ob_dist > 10:
                     ped = 3
                 else:
-                    ped = 2.5
+                    ped = 2.25
                 ob_line = [i for i in ob_line if not ob_middle-ped <= i <= ob_middle+ped]
                 cnt += 1
             
-            if cnt == 3:
+            if cnt == 2:
                 break
 
             if not ob_line:
@@ -107,7 +106,7 @@ class DrivingClient(DrivingController):
         p = - (middle - target) * 0.1
         i = p ** 2 * 0.05 if p >= 0 else - p ** 2 * 0.05 
 
-        middle_add = 0.5 * p + 0.4 * i
+        middle_add = 0.5 * p + 0.3 * i
 
 
         ################################## 삽입 부분 #########################################
@@ -123,18 +122,28 @@ class DrivingClient(DrivingController):
             tg = 2
         else :
             tg = 4
-        print(half_load_width)
 
         ## (참고할 전방의 커브 - 내 차량의 주행 각도) / (계산된 steer factor) 값으로 steering 값을 계산
-        if spd < 80:
-            set_steering = (angles[tg] - sensing_info.moving_angle) / 75 + middle_add
+        if (angles[tg]) < 45:
+            if spd < 80:
+                set_steering = (angles[tg] - sensing_info.moving_angle) / 80
+            else:
+                set_steering = (angles[tg] - sensing_info.moving_angle) / 80
+            car_controls.steering = set_steering
+            car_controls.steering += middle_add
         else:
-            set_steering = (angles[tg] - sensing_info.moving_angle) / 100 + middle_add
+            if angles[tg] < 0:
+                r = self.half_road_limit - 1.25 + middle - 1
+                beta = - math.pi * spd * 0.1 / r
+                car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180)
+            else:    
+                r = self.half_road_limit - 1.25 - middle - 1
+                beta = math.pi * spd * 0.1 / r
+                car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180)
 
 
-        car_controls.steering = set_steering
 
-        if abs(angles[int(spd//20)]) > 40 and spd > 75:
+        if abs(angles[int(spd//20)]) > 40 and spd > 85:
             car_controls.throttle = 0 if spd < 120 else -1
             car_controls.brake = 1
 
