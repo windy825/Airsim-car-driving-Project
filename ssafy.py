@@ -2,6 +2,7 @@ from DrivingInterface.drive_controller import DrivingController
 import math
 
 before = 0
+ob_select = 0
 
 class DrivingClient(DrivingController):
 
@@ -57,7 +58,7 @@ class DrivingClient(DrivingController):
             print("[MyCar] distance_to_way_points: {}".format(sensing_info.distance_to_way_points))
             print("=========================================================")
 
-        half_load_width = self.half_road_limit - 2.7
+        half_load_width = self.half_road_limit - 3.5
         car_controls.throttle = 1
         car_controls.brake = 0
 
@@ -92,17 +93,18 @@ class DrivingClient(DrivingController):
         near = abs(points[0] * math.cos((90 - angles[1]) * math.pi / 180)) + points[1] * math.cos(bo[1] * math.pi / 180)
         for obj in sensing_info.track_forward_obstacles:
             d, m = obj['dist'] - near, obj['to_middle']
-            if d <= 0:
-                n, k = -1, obj['dist']
-                ang = (90 - angles[n+1] * plag) * math.pi / 180
-                obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang), obj['dist'], obj['to_middle']])
-    
-            else:
-                n, k = int(d // 10), d % 10
-                if n+2 > 10:
-                    break
-                ang = (90 - angles[n+1] * plag) * math.pi / 180
-                obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang), obj['dist'], obj['to_middle']])
+            if d > -3:
+                if d <= 0:
+                    n, k = -1, obj['dist']
+                    ang = (90 - angles[n+1] * plag) * math.pi / 180
+                    obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang), obj['dist'], obj['to_middle']])
+        
+                else:
+                    n, k = int(d // 10), d % 10
+                    if n+2 > 10:
+                        break
+                    ang = (90 - angles[n+1] * plag) * math.pi / 180
+                    obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang), obj['dist'], obj['to_middle']])
 
 
 
@@ -210,6 +212,7 @@ class DrivingClient(DrivingController):
         if obs and obs[0][3] < 100:
 
             first_a, first_b, first_dist, first_m = obs[0]
+            # first_dist = abs(first_dist)
 
             absolute_dist = (first_a**2 + first_b**2)**1/2
             start_road = int(- first_m - half_load_width)
@@ -222,7 +225,8 @@ class DrivingClient(DrivingController):
             new_path2 = []
             for xx,yy in new_path:
                 for a, b, d, m in same_position_obs:
-                    pedding = 3.5 if angles[int(first_dist/10)] > 4 else 2.5
+                    pedding = 3.5 if angles[int(first_dist/10)] > 1 else 2.35
+                    print(pedding)
                     if not ((xx-a)**2 + (yy-b)**2)**1/2 > pedding:
                         break
                 else:
@@ -260,11 +264,24 @@ class DrivingClient(DrivingController):
                         final_thetas = 0
                     else:
                         final_thetas = math.atan((i[1] / i[0]) * 180 / math.pi - sensing_info.moving_angle)
+                    print(i)
+
+                    if spd > 70 and abs(i[1]) > 1 and i[0] < 40:
+                        car_controls.throttle = 0.2
+                        car_controls.brake = 0.4
+                    if spd > 70 and abs(i[1]) > 0.5 and i[0] < 30:
+                        car_controls.throttle = 0.1
+                        car_controls.brake = 0.5
+                    if spd > 130 and abs(i[1]) > 1 and i[0] < 100:
+                        car_controls.throttle = 0.2
+                        car_controls.brake = 0.4
+                        print('YYYYYY')
+                    if spd > 100 and len(obs) >= len(same_position_obs) + 1 and obs[len(same_position_obs)][2] < 70:
+                        car_controls.throttle = 0.2
+                        car_controls.brake = 0.4
                     break
 
-            
-            # print(final_thetas)
-            car_controls.steering += final_thetas / 8
+            car_controls.steering += final_thetas / 10
 
 
 
