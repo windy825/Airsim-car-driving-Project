@@ -186,7 +186,7 @@ class DrivingClient(DrivingController):
                 car_controls.brake = 1
 
 
-        if (abs(angles[int(spd//20)]) > 40 or abs(middle) > 9 or abs(car_controls.steering) >= 0.5) and spd > 100:
+        if (abs(angles[int(spd//20)]) > 40 or abs(middle) > 9 or abs(car_controls.steering) >= 0.5) and spd > 90:
             car_controls.throttle = 0
             if middle > 9:
                 car_controls.steering -= 0.1
