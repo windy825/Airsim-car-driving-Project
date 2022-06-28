@@ -65,7 +65,44 @@ class DrivingClient(DrivingController):
         # way points 좌표 시작
         middle = sensing_info.to_middle
         spd = sensing_info.speed
-        angles = sensing_info.track_forward_angles
+
+        # 오른쪽인가 왼쪽인가
+        plag = 1 if middle >= 0 else -1
+
+
+        points = [middle * plag,] + sensing_info.distance_to_way_points
+        angles = [0,] + [angle * plag for angle in sensing_info.track_forward_angles]
+        bo = [90, ]
+        ts = []
+        for i in range(20):
+            C = 180 - bo[i] - (angles[i+1] - angles[i])
+            temp = points[i] * math.sin(C * math.pi / 180) / points[i+1]
+            A =  math.asin(temp if abs(temp) <= 1 else int(temp)) * 180 / math.pi
+            bo.append(A)
+            ts.append(180 - C - A)
+
+        # way point 좌표
+        ways = []
+        for j in range(20): 
+            ways.append([points[j+1] * math.sin(sum(ts[:j+1]) * math.pi / 180), - points[j+1] * plag * math.cos(sum(ts[:j+1]) * math.pi / 180)])
+
+
+        # 장애물 좌표
+        obs = []
+        near = abs(points[0] * math.cos((90 - angles[1]) * math.pi / 180)) + points[1] * math.cos(bo[1] * math.pi / 180)
+        for obj in sensing_info.track_forward_obstacles:
+            d, m = obj['dist'] - near, obj['to_middle']
+            if d <= 0:
+                n, k = -1, obj['dist']
+                ang = (90 - angles[n+1] * plag) * math.pi / 180
+                obs.append([k * math.sin(ang) - m * math.cos(ang), -middle + k * math.cos(ang) + m * math.sin(ang), obj['dist'], obj['to_middle']])
+    
+            else:
+                n, k = int(d // 10), d % 10
+                if n+2 > 10:
+                    break
+                ang = (90 - angles[n+1] * plag) * math.pi / 180
+                obs.append([ways[n][0] + k * math.sin(ang) - m * math.cos(ang), ways[n][1] + k * math.cos(ang) + m * math.sin(ang), obj['dist'], obj['to_middle']])
 
 
 
@@ -82,38 +119,38 @@ class DrivingClient(DrivingController):
         first_ob = 0
 
         # 인식거리 안의 장애물 등록
-        if sensing_info.track_forward_obstacles and sensing_info.track_forward_obstacles[0]['dist'] < 150:
-            for obj in sensing_info.track_forward_obstacles:
-                ob_dist, ob_middle = obj['dist'], obj['to_middle']
+        # if sensing_info.track_forward_obstacles and sensing_info.track_forward_obstacles[0]['dist'] < 150:
+        #     for obj in sensing_info.track_forward_obstacles:
+        #         ob_dist, ob_middle = obj['dist'], obj['to_middle']
                 
-                if not first_ob:
-                    first_ob = ob_dist
-                if temp_dist and abs(ob_dist - temp_dist) > 40:
-                    break
+        #         if not first_ob:
+        #             first_ob = ob_dist
+        #         if temp_dist and abs(ob_dist - temp_dist) > 40:
+        #             break
 
-                if ob_start <= ob_dist <= ob_end:
-                    ped = 2.5
-                    if abs(angles[int(ob_dist/10)]) > 5:
-                        ped = 3.5
-                    else:
-                        ped = 2.25
-                    ob_line = [i for i in ob_line if not ob_middle-ped <= i <= ob_middle+ped]                
-                    temp_dist = ob_dist
-                    # print(ped)
+        #         if ob_start <= ob_dist <= ob_end:
+        #             ped = 2.5
+        #             if abs(angles[int(ob_dist/10)]) > 5:
+        #                 ped = 3.5
+        #             else:
+        #                 ped = 2.25
+        #             ob_line = [i for i in ob_line if not ob_middle-ped <= i <= ob_middle+ped]                
+        #             temp_dist = ob_dist
+        #             # print(ped)
                     
-                if not ob_line:
-                    ob_line = ob_line2[:]
-                    break
-                else:
-                    ob_line2 = ob_line[:]
+        #         if not ob_line:
+        #             ob_line = ob_line2[:]
+        #             break
+        #         else:
+        #             ob_line2 = ob_line[:]
         
 
 
-        target = min(ob_line,key = lambda x : abs(x - middle))
-        p = - (middle - target) * 0.1
-        i = p ** 2 * 0.05 if p >= 0 else - p ** 2 * 0.05 
+        # target = min(ob_line,key = lambda x : abs(x - middle))
+        # p = - (middle - target) * 0.1
+        # i = p ** 2 * 0.05 if p >= 0 else - p ** 2 * 0.05 
 
-        middle_add = 0.5 * p + 0.4 * i
+        # middle_add = 0.5 * p + 0.4 * i
 
 
         ################################## 삽입 부분 #########################################
@@ -129,7 +166,7 @@ class DrivingClient(DrivingController):
             tg = 2
         else:
             tg = 4
-
+        angles = sensing_info.track_forward_angles
         ## (참고할 전방의 커브 - 내 차량의 주행 각도) / (계산된 steer factor) 값으로 steering 값을 계산
         if (angles[tg]) < 45:
             if len(sensing_info.track_forward_obstacles) == 0 and spd < 160:
@@ -140,7 +177,6 @@ class DrivingClient(DrivingController):
                 else:
                     set_steering = (angles[tg] - sensing_info.moving_angle) / 90
                 car_controls.steering = set_steering
-                car_controls.steering += middle_add
         else:
             # print(angles[tg])
             k = spd * 5 / 18
@@ -166,17 +202,72 @@ class DrivingClient(DrivingController):
             car_controls.throttle = -1
             car_controls.brake = 1
 
-        if ob_line and temp_dist:
-            
-            # adding1 = sensing_info.track_forward_angles[int(temp_dist/10)]/2
-            # if abs(adding1) > 10:
-            #     adding1 = 0
-            # elif -2 < adding1 < 2:
-            #     adding1 = 0
 
-            # print(adding1)
-            angle_base_obs = [(math.atan(((b) - middle if b - middle != 0 else 0.001) / (temp_dist)) * 180 / math.pi - sensing_info.moving_angle) for b in ob_line]
-            car_controls.set_steering = min(angle_base_obs, key= lambda x : abs(x - sensing_info.moving_angle)) / 40
+
+
+        angles = [0,] + [angle * plag for angle in sensing_info.track_forward_angles]
+
+        if obs and obs[0][3] < 100:
+
+            first_a, first_b, first_dist, first_m = obs[0]
+
+            absolute_dist = (first_a**2 + first_b**2)**1/2
+            start_road = int(- first_m - half_load_width)
+            possible_path = [round(i * 0.1, 1) for i in range(start_road*10, int((start_road + half_load_width*2)*10))]
+            
+            new_path = [[-math.atan(angles[int(first_dist/10)]*math.pi / 180) * (x - first_b) + first_a, x] for x in possible_path]
+            # print(new_path)
+            same_position_obs = [[a,b,d,m] for a,b,d,m in obs if abs(first_dist-d) < 3]
+            
+            new_path2 = []
+            for xx,yy in new_path:
+                for a, b, d, m in same_position_obs:
+                    pedding = 3.5 if angles[int(first_dist/10)] > 4 else 2.5
+                    if not ((xx-a)**2 + (yy-b)**2)**1/2 > pedding:
+                        break
+                else:
+                    new_path2.append([xx,yy])
+            
+            new_path3 = []
+            for xx,yy in new_path2:
+                flag = 0
+                for a, b, d, m in same_position_obs:
+                    if ((xx-a)**2 + (yy-b)**2)**1/2 < 3:
+                        if yy < b:
+                            flag = 1 # 목표점이 장애물의 왼쪽
+                        else:
+                            flag = 2 # 목표점이 장애물의 오른쪽
+                        break
+                
+                if flag == 1:
+                    if yy <= 0:
+                        new_path3.append([xx-2,yy])
+                    else:
+                        new_path3.append([xx+2,yy])
+                elif flag == 2:
+                    if yy <= 0:
+                        new_path3.append([xx+2,yy])
+                    else:
+                        new_path3.append([xx-2,yy])
+                else:
+                    new_path3.append([xx,yy])
+            
+            new_path3 = sorted(new_path3, key= lambda x : abs(x[1] - 0))
+            # print(new_path3)
+            for i in new_path3:
+                if i[0] != 0:
+                    if i[1] == 0:
+                        final_thetas = 0
+                    else:
+                        final_thetas = math.atan((i[1] / i[0]) * 180 / math.pi - sensing_info.moving_angle)
+                    break
+
+            
+            # print(final_thetas)
+            car_controls.steering += final_thetas / 8
+
+
+
 
 
 
@@ -213,18 +304,6 @@ class DrivingClient(DrivingController):
                 self.accident_step = 0
                 car_controls.throttle = 1
                 car_controls.brake = 0
-
-
-        # 주행 코드
-
-        if spd < 20 and sensing_info.lap_progress > 3:
-            tg = 0
-        elif spd < 140:
-            tg = 3
-        elif spd < 170:
-            tg = 5
-        else:
-            tg = 7
 
 
         # 역방향 진행시 탈출 코드
