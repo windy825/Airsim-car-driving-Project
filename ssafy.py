@@ -166,7 +166,7 @@ class DrivingClient(DrivingController):
             tg = 2
         else:
             tg = 4
-        angles = sensing_info.track_forward_angles
+
         ## (참고할 전방의 커브 - 내 차량의 주행 각도) / (계산된 steer factor) 값으로 steering 값을 계산
         if (angles[tg]) < 45:
             if len(sensing_info.track_forward_obstacles) == 0 and spd < 160:
@@ -177,9 +177,9 @@ class DrivingClient(DrivingController):
                 else:
                     set_steering = (angles[tg] - sensing_info.moving_angle) / 90
                 car_controls.steering = set_steering
+                # car_controls.steering += middle_add
         else:
-            # print(angles[tg])
-            k = spd * 5 / 18
+            k = spd if spd >= 60 else 60
             if angles[tg] < 0:
                 r = self.half_road_limit - 1.25 + middle
                 beta = - math.pi * k * 0.1 / r
@@ -191,16 +191,18 @@ class DrivingClient(DrivingController):
 
 
 
-
-
-        if abs(angles[int(spd//20)]) > 40 and spd > 90:
-            car_controls.throttle = -1
-            car_controls.brake = 1
+        if (abs(angles[int(spd//20)]) >= 45 or abs(middle) >= 8 or abs(car_controls.steering) >= 0.3 or (abs(angles[int(spd//20)]) > 40 and len(sensing_info.track_forward_obstacles))) and spd > 90:
+            car_controls.throttle = 0
+            car_controls.brake = 0.7 if spd < 110 else 1
 
 
         if spd > 170 and abs(angles[-1]) > 10:
-            car_controls.throttle = -1
+            car_controls.throttle = -0.5
             car_controls.brake = 1
+        
+        if spd < 5:
+            car_controls.steering = 0
+
 
 
 
