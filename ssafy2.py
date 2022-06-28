@@ -26,7 +26,6 @@ class DrivingClient(DrivingController):
         self.accident_step = 0
         self.uturn_step = 0
         self.uturn_count = 0
-        self.derivative = 0
 
         #
         # Editing area ends
@@ -58,7 +57,7 @@ class DrivingClient(DrivingController):
             print("[MyCar] distance_to_way_points: {}".format(sensing_info.distance_to_way_points))
             print("=========================================================")
 
-        half_load_width = self.half_road_limit - 2.7
+        half_load_width = self.half_road_limit - 3
         car_controls.throttle = 1
         car_controls.brake = 0
 
@@ -67,7 +66,6 @@ class DrivingClient(DrivingController):
         middle = sensing_info.to_middle
         spd = sensing_info.speed
         angles = sensing_info.track_forward_angles
-        ways = sensing_info.distance_to_way_points
 
 
 
@@ -89,19 +87,13 @@ class DrivingClient(DrivingController):
             if ob_start <= ob_dist <= ob_end:
                 if abs(angles[int(ob_dist/10)]) > 5:
                     ped = 3.5
-                elif ob_dist > 70 and cnt < 2:
+                elif 30 < ob_dist < 80:
                     ped = 2.5
                 else:
                     ped = 2.25
                 ob_line = [i for i in ob_line if not ob_middle-ped <= i <= ob_middle+ped]
                 cnt += 1
-
-            target = min(ob_line,key = lambda x : abs(x - middle))
-            p = - (middle - target) * 0.1
-            i = p ** 2 * 0.05 if p >= 0 else - p ** 2 * 0.05 
-            d = -(p - self.derivative)
-            middle_add = 0.5 * p + 0.3 * i + 0.3 * d
-        
+            
 
             if not ob_line:
                 ob_line = ob_line2[:]
@@ -109,15 +101,18 @@ class DrivingClient(DrivingController):
             else:
                 ob_line2 = ob_line[:]
         
-            if ob_dist - dist > 30:
-                break
-            elif abs(middle_add) >= 1.5:
+            if ob_dist - dist > 50 and cnt >= 2:
                 break
             else:
                 dist = ob_dist
 
 
-        self.derivative = p
+        target = min(ob_line,key = lambda x : abs(x - middle))
+        p = - (middle - target) * 0.1
+        i = p ** 2 * 0.05 if p >= 0 else - p ** 2 * 0.05 
+        middle_add = 0.5 * p + 0.4 * i
+
+
 
         ################################## 삽입 부분 #########################################
         
@@ -154,12 +149,19 @@ class DrivingClient(DrivingController):
                 r = self.half_road_limit - 1.25 - middle
                 beta = math.pi * k * 0.1 / r
                 car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) if angles[tg] < 60 else 1
+            if spd > 80:
+                car_controls.throttle = -1
+                car_controls.brake = 1
 
 
 
-        if (abs(angles[int(spd//20)]) >= 45 or abs(middle) >= 8 or abs(car_controls.steering) >= 0.3 or (abs(angles[int(spd//20)]) > 40 and len(sensing_info.track_forward_obstacles))) and spd > 90:
+        if (abs(angles[int(spd//20)]) > 40 or abs(middle) > 9 or abs(car_controls.steering) >= 0.5) and spd > 100:
             car_controls.throttle = 0
-            car_controls.brake = 0.7 if spd < 110 else 1
+            if middle > 9:
+                car_controls.steering -= 0.1
+            elif middle <- 9:
+                car_controls.steering += 0.1
+            car_controls.brake = 0.3 if spd < 110 else 1
 
 
         if spd > 170 and abs(angles[-1]) > 10:
@@ -168,6 +170,13 @@ class DrivingClient(DrivingController):
         
         if spd < 5:
             car_controls.steering = 0
+
+        # if sensing_info.track_forward_obstacles:
+        #     obj = sensing_info.track_forward_obstacles[0]
+        #     d, m = obj['dist'], obj['to_middle']
+        #     if d <= 15 and abs(middle - m) < 2.25:
+        #         # if spd > 50 and abs(middle - m) >= 0.5
+        #         car_controls.steering = -0.3 if middle < m else 0.3
 
 
         # 충돌시 탈출 코드(수정 필요)

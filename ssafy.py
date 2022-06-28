@@ -2,7 +2,6 @@ from DrivingInterface.drive_controller import DrivingController
 import math
 
 before = 0
-ob_select = 0
 
 class DrivingClient(DrivingController):
 
@@ -170,7 +169,7 @@ class DrivingClient(DrivingController):
             tg = 4
 
         ## (참고할 전방의 커브 - 내 차량의 주행 각도) / (계산된 steer factor) 값으로 steering 값을 계산
-        if (angles[tg]) < 45:
+        if (angles[tg]) < 35:
             if len(sensing_info.track_forward_obstacles) == 0 and spd < 160:
                 car_controls.steering = (angles[tg] - sensing_info.moving_angle) / 90 - middle / 80
             else:
@@ -181,21 +180,20 @@ class DrivingClient(DrivingController):
                 car_controls.steering = set_steering
                 # car_controls.steering += middle_add
         else:
-            k = spd if spd >= 60 else 60
-            if angles[tg] < 0:
-                r = self.half_road_limit - 1.25 + middle
-                beta = - math.pi * k * 0.1 / r
-                car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) if angles[tg] > -60 else -1
-            else:    
-                r = self.half_road_limit - 1.25 - middle
-                beta = math.pi * k * 0.1 / r
-                car_controls.steering = (beta - sensing_info.moving_angle * math.pi / 180) if angles[tg] < 60 else 1
+            car_controls.steering = -1 if angles[tg] < 0 else 1
+            if spd > 80:
+                car_controls.throttle = -1
+                car_controls.brake = 1
 
 
-
-        if (abs(angles[int(spd//20)]) >= 45 or abs(middle) >= 8 or abs(car_controls.steering) >= 0.3 or (abs(angles[int(spd//20)]) > 40 and len(sensing_info.track_forward_obstacles))) and spd > 90:
+        if (abs(angles[int(spd//20)]) > 40 or abs(middle) > 9 or abs(car_controls.steering) >= 0.5) and spd > 100:
             car_controls.throttle = 0
-            car_controls.brake = 0.7 if spd < 110 else 1
+            if middle > 9:
+                car_controls.steering -= 0.1
+            elif middle < -9:
+                car_controls.steering += 0.1
+            car_controls.brake = 0.3 if spd < 110 else 1
+
 
 
         if spd > 170 and abs(angles[-1]) > 10:
@@ -328,13 +326,15 @@ class DrivingClient(DrivingController):
         # 역방향 진행시 탈출 코드
         if not sensing_info.moving_forward and not (self.accident_count + self.accident_step + self.recovery_count) and spd > 0:
             self.uturn_count += 1
-            if middle >= 0:
-                self.uturn_step = 1
-            else:
-                self.uturn_step = -1
+            if not self.uturn_step:
+                if middle >= 0:
+                    self.uturn_step = 1
+                else:
+                    self.uturn_step = -1
         
         if sensing_info.moving_forward:
             self.uturn_count = 0
+            self.uturn_step = 0
 
         if self.uturn_count > 5:
             car_controls.steering = self.uturn_step
