@@ -1,5 +1,4 @@
-# Airsim 자율주행 시뮬레이션 프로젝트  
-<small>22.06.20 ~ 22.06.28</small>
+# Airsim 자율주행 시뮬레이션 프로젝트  <small>22.06.20 ~ 22.06.28</small>
 
 **이 프로젝트는 Airsim 시뮬레이터를 이용하여, 가상현실에 구현된 차량을**
 
@@ -12,9 +11,9 @@
 ```
 사용 언어 : Python
 
-연결 형태 : 시뮬레이터(Unreal Engine 기반) 
-           API (주행정보를 수신, 주행조작을 송신하는 데이터 통신)
-           Python (받아온 데이터를 이용하여 주행조작 설정)
+연결 형태 : 시뮬레이터 (Unreal Engine 기반) 
+            API       (주행정보를 수신, 주행조작을 송신하는 데이터 통신)
+            Python    (받아온 데이터를 이용하여 주행조작 설정)
 ```
 
 <br>
@@ -38,7 +37,7 @@ Our goal is to develop AirSim as a platform for AI research to experiment with d
 
 <br>
 
-## 프로젝트의 목표 ?
+### 자율주행 구현 목표
 
 **[기본 요구사항]** 
 
