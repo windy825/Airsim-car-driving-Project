@@ -1,12 +1,15 @@
 # 가상 주행 프로젝트 <small>22.06.15 ~ 22.06.28</small>
+
 <br>
 ## 목차
 
 #### 1. 기본 (on this page)
 
-#### 2. [주행 파트](https://github.com/windy825/Airsim-Car-Driving-Project/blob/master/%EC%A3%BC%ED%96%89/readme.md)
+#### 2. [주행 파트]([Airsim-car-driving-Project/1. 주행 파트.md at master · windy825/Airsim-car-driving-Project · GitHub](https://github.com/windy825/Airsim-car-driving-Project/blob/master/1.%20%EC%A3%BC%ED%96%89%20%ED%8C%8C%ED%8A%B8.md))
 
-#### 3. [장애물 극복](https://github.com/windy825/Airsim-Car-Driving-Project/blob/master/2.%20%EC%9E%A5%EC%95%A0%EB%AC%BC%20%EA%B7%B9%EB%B3%B5/readme.md)
+#### 3. [장애물 극복]([Airsim-car-driving-Project/2. 장애물 극복.md at master · windy825/Airsim-car-driving-Project · GitHub](https://github.com/windy825/Airsim-car-driving-Project/blob/master/2.%20%EC%9E%A5%EC%95%A0%EB%AC%BC%20%EA%B7%B9%EB%B3%B5.md))
+
+#### 4. [API 명세]([Airsim-car-driving-Project/3. API 명세.md at master · windy825/Airsim-car-driving-Project · GitHub](https://github.com/windy825/Airsim-car-driving-Project/blob/master/3.%20API%20%EB%AA%85%EC%84%B8.md))
 
 <br>
 
@@ -24,7 +27,7 @@
             Python    (받아온 데이터를 이용하여 주행조작 설정)
 
 참 가 자  : 홍성목(주행)
-	    임진현(장애물 극복)
+        임진현(장애물 극복)
 ```
 
 <br>
@@ -60,5 +63,5 @@ Our goal is to develop AirSim as a platform for AI research to experiment with d
 
 1. 장애물
 2. 도로의 각도 (완만 or 급격한 커브도로)
-2. 다른 차 정보
-2. 도로의 경계선, 중앙선
+3. 다른 차 정보
+4. 도로의 경계선, 중앙선
