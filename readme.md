@@ -53,7 +53,32 @@ Our goal is to develop AirSim as a platform for AI research to experiment with d
 
 도로의 형태에 따라 알맞은 주행을 통해, 대상 차량의 자율주행에 안정성을 확보한다.
 
+자율 주행 제어는 총 세 가지 값으로 결정된다.
+
 <br>
+
+1) 방향 제어 (steering)
+   - car_controls.steering
+   - 값이 0보다 크면 오른쪽 방향으로, 값이 0보다 작으면 왼쪽 방향으로 제어가 이루어 진다.
+   - 값의 범위는 -1 에서 +1 사이의 값이다.
+   - 실제 차량 모델에서 타이어의 회전각은 약 -45º 에서 +45º 의 값이다.
+
+<br>
+
+2. 속도 제어 (Accelerator)
+   - car_controls.throttle
+   - 값이 0보다 크면 전진으로, 값이 0보다 작으면 후진으로 제어가 이루어 진다.
+   - 0 보다 클 때, 기어는 속도에 따라 자동으로 변속이 이루어 진다.
+   - 값의 범위는 -1 에서 +1 사이의 값이다.
+
+<br>
+
+3. 정지 제어 (brake)
+   - car_controls.brake
+   - 값이 0보다 크면 차량이 감속 또는 정지하도록 제어가 이루어 진다.
+   - 값의 범위는 0 에서 +1 사이의 값이다
+
+
 
 **[추가 요구사항]**  
 
@@ -65,3 +90,4 @@ Our goal is to develop AirSim as a platform for AI research to experiment with d
 2. 도로의 각도 (완만 or 급격한 커브도로)
 3. 다른 차 정보
 4. 도로의 경계선, 중앙선
+   
