@@ -1,4 +1,15 @@
-# Airsim 자율주행 시뮬레이션 프로젝트 <small>22.06.10 ~ 22.06.28</small>
+# 가상 주행 프로젝트 <small>22.06.15 ~ 22.06.28</small>
+<br>
+## 목차
+
+#### 1. 기본 (on this page)
+
+#### 2. [주행 파트](https://github.com/windy825/Airsim-Car-Driving-Project/blob/master/%EC%A3%BC%ED%96%89/readme.md)
+
+#### 3. [장애물 극복](https://github.com/windy825/Airsim-Car-Driving-Project/blob/master/2.%20%EC%9E%A5%EC%95%A0%EB%AC%BC%20%EA%B7%B9%EB%B3%B5/readme.md)
+
+<br>
+
 <br>
 
 **이 프로젝트는 Airsim 시뮬레이터를 이용하여, 가상현실에 구현된 차량을**
@@ -13,18 +24,8 @@
             Python    (받아온 데이터를 이용하여 주행조작 설정)
 
 참 가 자  : 홍성목(주행)
-		   임진현(장애물 극복)
+	    임진현(장애물 극복)
 ```
-
-<br>
-
-### 목차
-
-
-
-#### 주행 파트 
-
-#### 장애물 극복
 
 <br>
 
@@ -40,8 +41,6 @@ Our goal is to develop AirSim as a platform for AI research to experiment with d
 
 현 오픈소스 프로젝트 형태로 진행중인 Airsim은 현실에서의 자율주행 탑승장비의 인공지능 연구 (딥러닝, 컴퓨터 비젼, 강화학습)를 위한 플랫폼이 목표입니다.
 ```
-
-<br>
 
 <br>
 
