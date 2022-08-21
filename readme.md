@@ -5,11 +5,11 @@
 
 #### 1. 기본 (on this page)
 
-#### 2. [주행 파트](Airsim-car-driving-Project/1. 주행 파트.md at master · windy825/Airsim-car-driving-Project · GitHub](https://github.com/windy825/Airsim-car-driving-Project/blob/master/1.%20%EC%A3%BC%ED%96%89%20%ED%8C%8C%ED%8A%B8.md)
+#### 2. [주행 파트](https://github.com/windy825/Airsim-car-driving-Project/blob/master/1.%20%EC%A3%BC%ED%96%89%20%ED%8C%8C%ED%8A%B8.md)
 
-#### 3. [장애물 극복](Airsim-car-driving-Project/2. 장애물 극복.md at master · windy825/Airsim-car-driving-Project · GitHub](https://github.com/windy825/Airsim-car-driving-Project/blob/master/2.%20%EC%9E%A5%EC%95%A0%EB%AC%BC%20%EA%B7%B9%EB%B3%B5.md)
+#### 3. [장애물 극복](https://github.com/windy825/Airsim-car-driving-Project/blob/master/2.%20%EC%9E%A5%EC%95%A0%EB%AC%BC%20%EA%B7%B9%EB%B3%B5.md)
 
-#### 4. [API 명세](Airsim-car-driving-Project/3. API 명세.md at master · windy825/Airsim-car-driving-Project · GitHub](https://github.com/windy825/Airsim-car-driving-Project/blob/master/3.%20API%20%EB%AA%85%EC%84%B8.md)
+#### 4. [API 명세](https://github.com/windy825/Airsim-car-driving-Project/blob/master/3.%20API%20%EB%AA%85%EC%84%B8.md)
 
 <br>
 
