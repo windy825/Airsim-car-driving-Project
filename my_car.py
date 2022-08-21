@@ -67,12 +67,12 @@ class DrivingClient(DrivingController):
         if throttle_factor > 0.11: throttle_factor = 0.11  ## throttle 값을 최대 0.81 로 설정
         set_throttle = 0.7 + throttle_factor
         if sensing_info.speed < 60: set_throttle = 0.9  ## 속도가 60Km/h 이하인 경우 0.9 로 설정
-        if sensing_info.speed > 100: set_throttle = 0.6  ## 최대속도를 80km/h로 설정
+        if sensing_info.speed > 80: set_throttle = 0.6  ## 최대속도를 80km/h로 설정
 
         ## 차량의 Speed 에 따라서 핸들을 돌리는 값을 조정함
         steer_factor = sensing_info.speed * 1.5
         if sensing_info.speed > 70: steer_factor = sensing_info.speed * 0.85
-        if sensing_info.speed > 100: steer_factor = sensing_info.speed * 0.7
+        if sensing_info.speed > 80: steer_factor = sensing_info.speed * 0.7
 
         ## (참고할 전방의 커브 - 내 차량의 주행 각도) / (계산된 steer factor) 값으로 steering 값을 계산
         set_steering = (ref_angle - sensing_info.moving_angle) / (steer_factor + 0.001)
