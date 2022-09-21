@@ -120,3 +120,5 @@ Our goal is to develop AirSim as a platform for AI research to experiment with d
 회고를 하며 돌이켜 보면, 작은 스타트업을 하나 차리고 작업한 것처럼 지냈던것 같다. 
 
 숙식을 모두 사무실에서 해결하며 연구와 작업을 병행했다.
+
+## 7기 345팀 중 단일기록은 1등이나, 배틀기록은 3등 으로, 최종 3등으로 마무리 되었음.
